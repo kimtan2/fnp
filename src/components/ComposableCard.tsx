@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Composable, ProjectSettings } from '@/lib/composables';
 
 interface ComposableCardProps {
@@ -22,6 +23,7 @@ export default function ComposableCard({
   onUpdate, 
   onDelete 
 }: ComposableCardProps) {
+  const router = useRouter();
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [showMenu, setShowMenu] = useState(false);
@@ -30,6 +32,7 @@ export default function ComposableCard({
   const [editDescription, setEditDescription] = useState(composable.description);
   const [editStatus, setEditStatus] = useState(composable.status);
   const [editColor, setEditColor] = useState(composable.color);
+  const [dragStartTime, setDragStartTime] = useState<number>(0);
   const cardRef = useRef<HTMLDivElement>(null);
 
   const statusOptions = settings?.statusTypes || ['Todo', 'In Progress', 'Done'];
@@ -56,6 +59,7 @@ export default function ComposableCard({
         x: e.clientX - rect.left,
         y: e.clientY - rect.top
       });
+      setDragStartTime(Date.now());
       setIsDragging(true);
     }
   };
@@ -84,6 +88,12 @@ export default function ComposableCard({
     };
 
     const handleMouseUp = () => {
+      if (isDragging) {
+        const dragDuration = Date.now() - dragStartTime;
+        if (dragDuration < 200) {
+          router.push(`/project/${composable.projectId}/composable/${composable.id}`);
+        }
+      }
       setIsDragging(false);
     };
 
