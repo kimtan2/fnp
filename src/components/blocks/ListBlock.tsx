@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { ContentBlock, ListType, ListItem, RichText } from '@/lib/content';
-import RichTextEditor from '@/components/RichTextEditor';
+import SimpleRichTextEditor from '@/components/SimpleRichTextEditor';
 
 interface ListBlockProps {
   block: ContentBlock;
@@ -200,7 +200,7 @@ export default function ListBlock({
             {renderListMarker(listType, index, item)}
             
             <div className="flex-1">
-              <RichTextEditor
+              <SimpleRichTextEditor
                 content={item.content}
                 onChange={(newContent) => handleItemChange(index, newContent)}
                 placeholder="List item..."

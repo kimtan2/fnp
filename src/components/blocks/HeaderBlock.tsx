@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { ContentBlock, HeaderSize } from '@/lib/content';
-import RichTextEditor from '@/components/RichTextEditor';
+import SimpleRichTextEditor from '@/components/SimpleRichTextEditor';
 import { RichText } from '@/lib/content';
 
 interface HeaderBlockProps {
@@ -127,7 +127,7 @@ export default function HeaderBlock({
       </div>
 
       {/* Header content */}
-      <RichTextEditor
+      <SimpleRichTextEditor
         content={headerText}
         onChange={handleTextChange}
         placeholder="Enter header text..."

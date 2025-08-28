@@ -1,7 +1,7 @@
 'use client';
 
 import { ContentBlock, ListItem, RichText } from '@/lib/content';
-import RichTextEditor from '@/components/RichTextEditor';
+import SimpleRichTextEditor from '@/components/SimpleRichTextEditor';
 
 interface CollapsibleListBlockProps {
   block: ContentBlock;
@@ -151,7 +151,7 @@ export default function CollapsibleListBlock({
         </button>
 
         <div className="flex-1">
-          <RichTextEditor
+          <SimpleRichTextEditor
             content={title}
             onChange={handleTitleChange}
             placeholder="Section title..."
@@ -174,7 +174,7 @@ export default function CollapsibleListBlock({
                 <span className="text-slate-500 dark:text-slate-400 mr-2 mt-1">•</span>
                 
                 <div className="flex-1">
-                  <RichTextEditor
+                  <SimpleRichTextEditor
                     content={item.content}
                     onChange={(newContent) => handleItemChange(index, newContent)}
                     placeholder="Item content..."
