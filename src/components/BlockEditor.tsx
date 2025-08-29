@@ -113,53 +113,116 @@ export default function BlockEditor({
   }, [blocks, onUpdateBlock]);
 
   const handleUpdateNestedBlock = useCallback((updatedNestedBlock: ContentBlock) => {
-    // Find the parent block that contains this nested block
-    const parentBlock = blocks.find(b => 
-      b.content.nestedBlocks?.some(nb => nb.id === updatedNestedBlock.id)
+    // Helper function to recursively update nested blocks
+    const updateNestedBlockRecursively = (blocks: ContentBlock[], targetBlockId: string, updatedBlock: ContentBlock): ContentBlock[] => {
+      return blocks.map(block => {
+        // Check if this block contains the target nested block
+        if (block.content.nestedBlocks?.some(nb => nb.id === targetBlockId)) {
+          const updatedNestedBlocks = block.content.nestedBlocks.map(nb => 
+            nb.id === targetBlockId ? updatedBlock : nb
+          );
+          
+          return {
+            ...block,
+            content: {
+              ...block.content,
+              nestedBlocks: updatedNestedBlocks
+            }
+          };
+        }
+        
+        // If this block has nested blocks, recursively search within them
+        if (block.content.nestedBlocks && block.content.nestedBlocks.length > 0) {
+          const updatedNestedBlocks = updateNestedBlockRecursively(block.content.nestedBlocks, targetBlockId, updatedBlock);
+          
+          // Check if any nested block was actually updated
+          const wasUpdated = updatedNestedBlocks.some((nb, index) => 
+            nb !== block.content.nestedBlocks![index]
+          );
+          
+          if (wasUpdated) {
+            return {
+              ...block,
+              content: {
+                ...block.content,
+                nestedBlocks: updatedNestedBlocks
+              }
+            };
+          }
+        }
+        
+        return block;
+      });
+    };
+    
+    // Find and update the top-level block that contains this nested block
+    const updatedBlocks = updateNestedBlockRecursively(blocks, updatedNestedBlock.id, updatedNestedBlock);
+    
+    // Find the block that was actually updated and save it
+    const updatedTopLevelBlock = updatedBlocks.find((block, index) => 
+      block !== blocks[index]
     );
     
-    if (!parentBlock || !parentBlock.content.nestedBlocks) return;
-
-    // Update the nested block within the parent's nested blocks
-    const updatedNestedBlocks = parentBlock.content.nestedBlocks.map(nb => 
-      nb.id === updatedNestedBlock.id ? updatedNestedBlock : nb
-    );
-
-    // Update the parent block
-    const updatedParentBlock = {
-      ...parentBlock,
-      content: {
-        ...parentBlock.content,
-        nestedBlocks: updatedNestedBlocks
-      }
-    };
-
-    onUpdateBlock(updatedParentBlock);
+    if (updatedTopLevelBlock) {
+      onUpdateBlock(updatedTopLevelBlock);
+    }
   }, [blocks, onUpdateBlock]);
 
   const handleDeleteNestedBlock = useCallback((nestedBlockId: string) => {
-    // Find the parent block that contains this nested block
-    const parentBlock = blocks.find(b => 
-      b.content.nestedBlocks?.some(nb => nb.id === nestedBlockId)
+    // Helper function to recursively delete nested blocks
+    const deleteNestedBlockRecursively = (blocks: ContentBlock[], targetBlockId: string): ContentBlock[] => {
+      return blocks.map(block => {
+        // Check if this block contains the target nested block
+        if (block.content.nestedBlocks?.some(nb => nb.id === targetBlockId)) {
+          // Remove the nested block and reorder positions
+          const updatedNestedBlocks = block.content.nestedBlocks
+            .filter(nb => nb.id !== targetBlockId)
+            .map((nb, index) => ({ ...nb, position: index }));
+          
+          return {
+            ...block,
+            content: {
+              ...block.content,
+              nestedBlocks: updatedNestedBlocks
+            }
+          };
+        }
+        
+        // If this block has nested blocks, recursively search within them
+        if (block.content.nestedBlocks && block.content.nestedBlocks.length > 0) {
+          const updatedNestedBlocks = deleteNestedBlockRecursively(block.content.nestedBlocks, targetBlockId);
+          
+          // Check if any nested block was actually updated
+          const wasUpdated = updatedNestedBlocks.some((nb, index) => 
+            nb !== block.content.nestedBlocks![index]
+          );
+          
+          if (wasUpdated) {
+            return {
+              ...block,
+              content: {
+                ...block.content,
+                nestedBlocks: updatedNestedBlocks
+              }
+            };
+          }
+        }
+        
+        return block;
+      });
+    };
+    
+    // Find and update the top-level block that contains this nested block
+    const updatedBlocks = deleteNestedBlockRecursively(blocks, nestedBlockId);
+    
+    // Find the block that was actually updated and save it
+    const updatedTopLevelBlock = updatedBlocks.find((block, index) => 
+      block !== blocks[index]
     );
     
-    if (!parentBlock || !parentBlock.content.nestedBlocks) return;
-
-    // Remove the nested block and reorder positions
-    const updatedNestedBlocks = parentBlock.content.nestedBlocks
-      .filter(nb => nb.id !== nestedBlockId)
-      .map((nb, index) => ({ ...nb, position: index }));
-
-    // Update the parent block
-    const updatedParentBlock = {
-      ...parentBlock,
-      content: {
-        ...parentBlock.content,
-        nestedBlocks: updatedNestedBlocks
-      }
-    };
-
-    onUpdateBlock(updatedParentBlock);
+    if (updatedTopLevelBlock) {
+      onUpdateBlock(updatedTopLevelBlock);
+    }
   }, [blocks, onUpdateBlock]);
 
   const handleReorderNestedBlocks = useCallback(async (parentBlockId: string, newOrder: string[]) => {
@@ -233,7 +296,7 @@ export default function BlockEditor({
     return colorMap[color] || 'transparent';
   };
 
-  const renderBlock = (block: ContentBlock, index: number, isNested = false) => {
+  const renderBlock = (block: ContentBlock, index: number, isNested = false, parentBlockId?: string) => {
     const blockProps = {
       block,
       onUpdate: isNested ? handleUpdateNestedBlock : onUpdateBlock, // KEY FIX: Different handlers for nested vs top-level blocks
@@ -260,11 +323,78 @@ export default function BlockEditor({
       case 'collapsible-list':
         BlockComponent = CollapsibleListBlock;
         // Add nested block handlers for collapsible list
-        (blockProps as any).onAddNestedBlock = handleAddNestedBlock;
-        (blockProps as any).onUpdateNestedBlock = handleUpdateNestedBlock;
-        (blockProps as any).onDeleteNestedBlock = handleDeleteNestedBlock;
-        (blockProps as any).onReorderNestedBlocks = handleReorderNestedBlocks;
-        (blockProps as any).renderNestedBlock = (nestedBlock: ContentBlock, nestedIndex: number) => renderBlock(nestedBlock, nestedIndex, true);
+        if (isNested && parentBlockId) {
+          // For nested collapsible blocks, create specialized handlers that work within the parent
+          (blockProps as any).onAddNestedBlock = (nestedParentBlockId: string, type: BlockType, position?: number) => {
+            // Find the top-level parent that contains this nested block
+            const topLevelParent = blocks.find(b => 
+              b.content.nestedBlocks?.some(nb => nb.id === block.id)
+            );
+            
+            if (!topLevelParent) return;
+            
+            // Find the nested block within the parent and update its nested blocks
+            const updatedNestedBlocks = topLevelParent.content.nestedBlocks?.map(nb => {
+              if (nb.id === nestedParentBlockId) {
+                const currentNested = nb.content.nestedBlocks || [];
+                const newPosition = position !== undefined ? position : currentNested.length;
+                
+                const newNestedBlock: ContentBlock = {
+                  id: crypto.randomUUID(),
+                  composableId: nb.composableId,
+                  type,
+                  position: newPosition,
+                  parentBlockId: nestedParentBlockId,
+                  content: getDefaultContent(type),
+                  createdAt: new Date(),
+                  updatedAt: new Date()
+                };
+                
+                // Shift existing blocks if inserting in middle
+                const updatedCurrentNested = [...currentNested];
+                if (position !== undefined && position < currentNested.length) {
+                  updatedCurrentNested.forEach((nestedBlock, idx) => {
+                    if (idx >= position) {
+                      nestedBlock.position = nestedBlock.position + 1;
+                    }
+                  });
+                }
+                updatedCurrentNested.splice(newPosition, 0, newNestedBlock);
+                
+                return {
+                  ...nb,
+                  content: {
+                    ...nb.content,
+                    nestedBlocks: updatedCurrentNested
+                  }
+                };
+              }
+              return nb;
+            });
+            
+            // Update the top-level parent
+            const updatedParent = {
+              ...topLevelParent,
+              content: {
+                ...topLevelParent.content,
+                nestedBlocks: updatedNestedBlocks
+              }
+            };
+            
+            onUpdateBlock(updatedParent);
+          };
+          
+          (blockProps as any).onUpdateNestedBlock = handleUpdateNestedBlock;
+          (blockProps as any).onDeleteNestedBlock = handleDeleteNestedBlock;
+          (blockProps as any).onReorderNestedBlocks = handleReorderNestedBlocks;
+        } else {
+          // For top-level collapsible blocks, use the regular handlers
+          (blockProps as any).onAddNestedBlock = handleAddNestedBlock;
+          (blockProps as any).onUpdateNestedBlock = handleUpdateNestedBlock;
+          (blockProps as any).onDeleteNestedBlock = handleDeleteNestedBlock;
+          (blockProps as any).onReorderNestedBlocks = handleReorderNestedBlocks;
+        }
+        (blockProps as any).renderNestedBlock = (nestedBlock: ContentBlock, nestedIndex: number) => renderBlock(nestedBlock, nestedIndex, true, block.id);
         break;
       case 'text-block':
         BlockComponent = TextBlockContent;
@@ -394,7 +524,7 @@ export default function BlockEditor({
 
       {/* Render blocks with proper spacing */}
       <div className="space-y-1">
-        {blocks.map((block, index) => renderBlock(block, index, false))}
+        {blocks.map((block, index) => renderBlock(block, index, false, undefined))}
       </div>
 
       {/* Final hover area for adding blocks at end - extends infinitely */}
