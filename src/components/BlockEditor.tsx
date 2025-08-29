@@ -236,8 +236,8 @@ export default function BlockEditor({
   const renderBlock = (block: ContentBlock, index: number, isNested = false) => {
     const blockProps = {
       block,
-      onUpdate: onUpdateBlock,
-      onDelete: () => onDeleteBlock(block.id),
+      onUpdate: isNested ? handleUpdateNestedBlock : onUpdateBlock, // KEY FIX: Different handlers for nested vs top-level blocks
+      onDelete: isNested ? () => handleDeleteNestedBlock(block.id) : () => onDeleteBlock(block.id),
       onDragStart: () => handleDragStart(block.id),
       onDragEnd: handleDragEnd,
       isDragging: draggedBlockId === block.id

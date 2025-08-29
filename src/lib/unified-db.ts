@@ -258,8 +258,12 @@ class UnifiedDB {
           createdAt: new Date(block.createdAt),
           updatedAt: new Date(block.updatedAt)
         }));
-        blocks.sort((a, b) => a.position - b.position);
-        resolve(blocks);
+        
+        // KEY FIX: Filter out nested blocks - they should only exist within parent blocks
+        const topLevelBlocks = blocks.filter(block => !block.parentBlockId);
+        
+        topLevelBlocks.sort((a, b) => a.position - b.position);
+        resolve(topLevelBlocks);
       };
       request.onerror = () => reject(request.error);
     });
