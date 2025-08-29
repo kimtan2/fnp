@@ -132,7 +132,7 @@ export default function ComposableDetailPage() {
         };
       case 'text':
         return {
-          text: { spans: [{ text: 'Type your text here...' }] }
+          text: { spans: [] }
         };
       case 'list':
         return {
@@ -147,11 +147,9 @@ export default function ComposableDetailPage() {
         };
       case 'collapsible-list':
         return {
-          title: { spans: [{ text: 'Collapsible Section' }] },
+          title: { spans: [{ text: 'Toggle section' }] },
           isExpanded: false,
-          items: [
-            { id: crypto.randomUUID(), content: { spans: [{ text: 'Item 1' }] } }
-          ]
+          nestedBlocks: []
         };
       case 'text-block':
         return {

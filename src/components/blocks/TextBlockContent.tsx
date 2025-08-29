@@ -41,11 +41,11 @@ export default function TextBlockContent({
     >
       {/* Drag handle */}
       <div 
-        className="absolute -left-12 top-2 opacity-0 group-hover:opacity-100 transition-opacity cursor-move"
-        onMouseDown={onDragStart}
+        className="absolute -left-6 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
+        onMouseDown={(e) => e.stopPropagation()}
       >
-        <svg className="w-4 h-4 text-slate-400" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
+        <svg className="w-4 h-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M7 2a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM7 8a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM7 14a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM13 2a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM13 8a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM13 14a2 2 0 1 1 0 4 2 2 0 0 1 0-4z" />
         </svg>
       </div>
 

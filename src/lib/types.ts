@@ -71,6 +71,7 @@ export interface ContentBlock {
   composableId: string;
   type: BlockType;
   position: number;
+  parentBlockId?: string; // For nested blocks
   content: {
     // Header block
     headerSize?: HeaderSize;
@@ -86,13 +87,16 @@ export interface ContentBlock {
     // Divider block
     dividerStyle?: DividerStyle;
     
-    // Collapsible list block
+    // Collapsible list block (toggle section)
     title?: RichText;
     isExpanded?: boolean;
-    items?: ListItem[];
+    nestedBlocks?: ContentBlock[]; // Changed from items to nested blocks
     
     // Text block (longer content)
     textContent?: RichText;
+    
+    // Styling
+    backgroundColor?: string;
   };
   createdAt: Date;
   updatedAt: Date;
