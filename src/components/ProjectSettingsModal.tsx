@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ProjectSettings } from '@/lib/composables';
+import { ProjectSettings } from '@/lib/types';
 
 interface ProjectSettingsModalProps {
   isOpen: boolean;

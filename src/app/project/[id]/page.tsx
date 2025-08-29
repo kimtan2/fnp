@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Project, projectDB } from '@/lib/db';
-import { Composable, composableDB, ProjectSettings } from '@/lib/composables';
+import { Project, Composable, ProjectSettings } from '@/lib/types';
+import { unifiedDB } from '@/lib/unified-db';
 import ProjectHeader from '@/components/ProjectHeader';
 import ComposableCard from '@/components/ComposableCard';
 import AddComposableModal from '@/components/AddComposableModal';
@@ -29,9 +29,9 @@ export default function ProjectPage() {
     try {
       setLoading(true);
       const [projectData, composablesData, settingsData] = await Promise.all([
-        projectDB.getAllProjects().then(projects => projects.find(p => p.id === projectId)),
-        composableDB.getComposablesByProject(projectId),
-        composableDB.getProjectSettings(projectId)
+        unifiedDB.getAllProjects().then(projects => projects.find(p => p.id === projectId)),
+        unifiedDB.getComposablesByProject(projectId),
+        unifiedDB.getProjectSettings(projectId)
       ]);
 
       if (!projectData) {
@@ -51,7 +51,7 @@ export default function ProjectPage() {
 
   const handleAddComposable = async (composableData: Omit<Composable, 'id' | 'createdAt' | 'projectId'>) => {
     try {
-      const newComposable = await composableDB.addComposable({
+      const newComposable = await unifiedDB.addComposable({
         ...composableData,
         projectId
       });
@@ -64,7 +64,7 @@ export default function ProjectPage() {
 
   const handleUpdateComposable = async (composable: Composable) => {
     try {
-      await composableDB.updateComposable(composable);
+      await unifiedDB.updateComposable(composable);
       setComposables(prev => prev.map(c => c.id === composable.id ? composable : c));
     } catch (error) {
       console.error('Failed to update composable:', error);
@@ -73,7 +73,7 @@ export default function ProjectPage() {
 
   const handleDeleteComposable = async (id: string) => {
     try {
-      await composableDB.deleteComposable(id);
+      await unifiedDB.deleteComposable(id);
       setComposables(prev => prev.filter(c => c.id !== id));
     } catch (error) {
       console.error('Failed to delete composable:', error);
@@ -82,7 +82,7 @@ export default function ProjectPage() {
 
   const handleUpdateSettings = async (newSettings: ProjectSettings) => {
     try {
-      await composableDB.updateProjectSettings(projectId, newSettings);
+      await unifiedDB.updateProjectSettings(projectId, newSettings);
       setSettings(newSettings);
       setIsSettingsModalOpen(false);
     } catch (error) {

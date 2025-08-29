@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { ContentBlock, BlockType } from '@/lib/content';
+import { ContentBlock, BlockType } from '@/lib/types';
 import HeaderBlock from '@/components/blocks/HeaderBlock';
 import TextBlock from '@/components/blocks/TextBlock';
 import ListBlock from '@/components/blocks/ListBlock';

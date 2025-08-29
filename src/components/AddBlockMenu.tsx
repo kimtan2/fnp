@@ -1,6 +1,6 @@
 'use client';
 
-import { BlockType } from '@/lib/content';
+import { BlockType } from '@/lib/types';
 
 interface AddBlockMenuProps {
   onAddBlock: (type: BlockType) => void;

@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Project, projectDB } from '@/lib/db';
+import { Project } from '@/lib/types';
+import { unifiedDB } from '@/lib/unified-db';
 import ProjectWidget from '@/components/ProjectWidget';
 import AddProjectModal from '@/components/AddProjectModal';
 import Header from '@/components/Header';
@@ -16,7 +17,7 @@ export default function Home() {
 
   const loadProjects = async () => {
     try {
-      const loadedProjects = await projectDB.getAllProjects();
+      const loadedProjects = await unifiedDB.getAllProjects();
       setProjects(loadedProjects);
     } catch (error) {
       console.error('Failed to load projects:', error);
@@ -25,7 +26,7 @@ export default function Home() {
 
   const handleAddProject = async (name: string, color: string) => {
     try {
-      const newProject = await projectDB.addProject({
+      const newProject = await unifiedDB.addProject({
         name,
         color,
         position: { x: Math.random() * 400, y: Math.random() * 300 }
@@ -39,7 +40,7 @@ export default function Home() {
 
   const handleUpdateProject = async (project: Project) => {
     try {
-      await projectDB.updateProject(project);
+      await unifiedDB.updateProject(project);
       setProjects(prev => prev.map(p => p.id === project.id ? project : p));
     } catch (error) {
       console.error('Failed to update project:', error);
@@ -48,7 +49,7 @@ export default function Home() {
 
   const handleDeleteProject = async (id: string) => {
     try {
-      await projectDB.deleteProject(id);
+      await unifiedDB.deleteProject(id);
       setProjects(prev => prev.filter(p => p.id !== id));
     } catch (error) {
       console.error('Failed to delete project:', error);

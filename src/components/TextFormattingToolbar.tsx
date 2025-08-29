@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { TextStyle } from '@/lib/content';
+import { TextStyle } from '@/lib/types';
 
 interface TextFormattingToolbarProps {
   position: { x: number; y: number };

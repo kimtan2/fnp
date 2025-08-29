@@ -1,9 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { ContentBlock, HeaderSize } from '@/lib/content';
-import SimpleRichTextEditor from '@/components/SimpleRichTextEditor';
-import { RichText } from '@/lib/content';
+import { ContentBlock, HeaderSize, RichText } from '@/lib/types';
+import BasicTextInput from '@/components/BasicTextInput';
 
 interface HeaderBlockProps {
   block: ContentBlock;
@@ -127,7 +126,7 @@ export default function HeaderBlock({
       </div>
 
       {/* Header content */}
-      <SimpleRichTextEditor
+      <BasicTextInput
         content={headerText}
         onChange={handleTextChange}
         placeholder="Enter header text..."

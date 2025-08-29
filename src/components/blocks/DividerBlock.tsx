@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ContentBlock, DividerStyle } from '@/lib/content';
+import { ContentBlock, DividerStyle } from '@/lib/types';
 
 interface DividerBlockProps {
   block: ContentBlock;

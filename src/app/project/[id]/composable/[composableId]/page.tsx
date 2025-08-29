@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Composable, composableDB } from '@/lib/composables';
-import { Project, projectDB } from '@/lib/db';
-import { ContentBlock, contentDB, BlockType } from '@/lib/content';
+import { Composable, Project, ContentBlock, BlockType } from '@/lib/types';
+import { unifiedDB } from '@/lib/unified-db';
 import ComposableHeader from '@/components/ComposableHeader';
 import BlockEditor from '@/components/BlockEditor';
 
@@ -27,9 +26,9 @@ export default function ComposableDetailPage() {
     try {
       setLoading(true);
       const [projectData, composablesData, blocksData] = await Promise.all([
-        projectDB.getAllProjects().then(projects => projects.find(p => p.id === projectId)),
-        composableDB.getComposablesByProject(projectId).then(composables => composables.find(c => c.id === composableId)),
-        contentDB.getBlocksByComposable(composableId)
+        unifiedDB.getAllProjects().then(projects => projects.find(p => p.id === projectId)),
+        unifiedDB.getComposablesByProject(projectId).then(composables => composables.find(c => c.id === composableId)),
+        unifiedDB.getBlocksByComposable(composableId)
       ]);
 
       if (!projectData) {
@@ -66,11 +65,11 @@ export default function ComposableDetailPage() {
             : block
         );
         
-        await Promise.all(updatedBlocks.map(block => contentDB.updateBlock(block)));
+        await Promise.all(updatedBlocks.map(block => unifiedDB.updateBlock(block)));
         setBlocks(updatedBlocks);
       }
 
-      const newBlock = await contentDB.addBlock({
+      const newBlock = await unifiedDB.addBlock({
         composableId,
         type,
         position: newPosition,
@@ -85,7 +84,7 @@ export default function ComposableDetailPage() {
 
   const handleUpdateBlock = async (block: ContentBlock) => {
     try {
-      await contentDB.updateBlock(block);
+      await unifiedDB.updateBlock(block);
       setBlocks(prev => prev.map(b => b.id === block.id ? block : b));
     } catch (error) {
       console.error('Failed to update block:', error);
@@ -94,7 +93,7 @@ export default function ComposableDetailPage() {
 
   const handleDeleteBlock = async (blockId: string) => {
     try {
-      await contentDB.deleteBlock(blockId);
+      await unifiedDB.deleteBlock(blockId);
       const remainingBlocks = blocks.filter(b => b.id !== blockId);
       
       // Reorder remaining blocks
@@ -103,7 +102,7 @@ export default function ComposableDetailPage() {
         position: index
       }));
       
-      await Promise.all(reorderedBlocks.map(block => contentDB.updateBlock(block)));
+      await Promise.all(reorderedBlocks.map(block => unifiedDB.updateBlock(block)));
       setBlocks(reorderedBlocks);
     } catch (error) {
       console.error('Failed to delete block:', error);
@@ -112,7 +111,7 @@ export default function ComposableDetailPage() {
 
   const handleReorderBlocks = async (newOrder: string[]) => {
     try {
-      await contentDB.reorderBlocks(composableId, newOrder);
+      await unifiedDB.reorderBlocks(composableId, newOrder);
       const reorderedBlocks = blocks.map(block => {
         const newPosition = newOrder.indexOf(block.id);
         return { ...block, position: newPosition };

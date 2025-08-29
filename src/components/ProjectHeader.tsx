@@ -1,4 +1,4 @@
-import { Project } from '@/lib/db';
+import { Project } from '@/lib/types';
 
 interface ProjectHeaderProps {
   project: Project;

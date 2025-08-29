@@ -1,7 +1,7 @@
 'use client';
 
-import { ContentBlock, RichText } from '@/lib/content';
-import SimpleRichTextEditor from '@/components/SimpleRichTextEditor';
+import { ContentBlock, RichText } from '@/lib/types';
+import BasicTextInput from '@/components/BasicTextInput';
 
 interface TextBlockProps {
   block: ContentBlock;
@@ -63,7 +63,7 @@ export default function TextBlock({
       </div>
 
       {/* Text content */}
-      <SimpleRichTextEditor
+      <BasicTextInput
         content={text}
         onChange={handleTextChange}
         placeholder="Type something..."

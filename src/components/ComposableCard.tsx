@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Composable, ProjectSettings } from '@/lib/composables';
+import { Composable, ProjectSettings } from '@/lib/types';
 
 interface ComposableCardProps {
   composable: Composable;

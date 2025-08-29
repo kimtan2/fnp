@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { RichText, RichTextSpan, TextStyle } from '@/lib/content';
+import { RichText, RichTextSpan, TextStyle } from '@/lib/types';
 import TextFormattingToolbar from '@/components/TextFormattingToolbar';
 
 interface RichTextEditorProps {

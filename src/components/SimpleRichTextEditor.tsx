@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
-import { RichText } from '@/lib/content';
+import { RichText } from '@/lib/types';
 
 interface SimpleRichTextEditorProps {
   content: RichText;

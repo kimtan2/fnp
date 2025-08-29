@@ -1,7 +1,7 @@
 'use client';
 
-import { ContentBlock, RichText } from '@/lib/content';
-import SimpleRichTextEditor from '@/components/SimpleRichTextEditor';
+import { ContentBlock, RichText } from '@/lib/types';
+import BasicTextInput from '@/components/BasicTextInput';
 
 interface TextBlockContentProps {
   block: ContentBlock;
@@ -64,7 +64,7 @@ export default function TextBlockContent({
 
       {/* Text block with border */}
       <div className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 bg-slate-50 dark:bg-slate-800/50">
-        <SimpleRichTextEditor
+        <BasicTextInput
           content={textContent}
           onChange={handleTextChange}
           placeholder="Write your longer text content here. This block is perfect for paragraphs, detailed explanations, and extended writing..."

@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Composable } from '@/lib/composables';
-import { ProjectSettings } from '@/lib/composables';
+import { Composable, ProjectSettings } from '@/lib/types';
 
 interface AddComposableModalProps {
   isOpen: boolean;

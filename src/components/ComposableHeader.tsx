@@ -1,5 +1,4 @@
-import { Project } from '@/lib/db';
-import { Composable } from '@/lib/composables';
+import { Project, Composable } from '@/lib/types';
 
 interface ComposableHeaderProps {
   project: Project;
