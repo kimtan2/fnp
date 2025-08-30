@@ -77,6 +77,8 @@ export interface ContentBlock {
   position: number;
   parentBlockId?: string; // For nested blocks
   overlayComment?: string; // For overlay comments
+  hasRückseite?: boolean; // For card flip functionality
+  isFlipped?: boolean; // Current flip state
   content: {
     // Header block
     headerSize?: HeaderSize;
@@ -102,6 +104,10 @@ export interface ContentBlock {
     
     // Markdown block
     markdownContent?: string;
+    
+    // Rückseite (back side) content for text and text-block
+    rückseiteTtext?: RichText; // Back side for text blocks
+    rückseiteTextContent?: RichText; // Back side for text-block blocks
     
     // Styling
     backgroundColor?: string;

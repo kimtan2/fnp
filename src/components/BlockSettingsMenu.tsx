@@ -84,6 +84,22 @@ export default function BlockSettingsMenu({ block, onDelete, onUpdate, onClose, 
 
   const currentColor = block.content.backgroundColor || '';
 
+  const handleAddRückseite = () => {
+    const updatedBlock = {
+      ...block,
+      hasRückseite: true,
+      content: {
+        ...block.content,
+        rückseiteTtext: block.type === 'text' ? { spans: [] } : undefined,
+        rückseiteTextContent: block.type === 'text-block' ? { spans: [] } : undefined
+      }
+    };
+    onUpdate(updatedBlock);
+    onClose();
+  };
+
+  const isTextOrTextBlock = block.type === 'text' || block.type === 'text-block';
+
   return (
     <div
       ref={menuRef}
@@ -169,6 +185,19 @@ export default function BlockSettingsMenu({ block, onDelete, onUpdate, onClose, 
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
           </svg>
           <span>Overlay Comment</span>
+        </button>
+      )}
+
+      {/* Add Rückseite option */}
+      {isTextOrTextBlock && !block.hasRückseite && (
+        <button
+          onClick={handleAddRückseite}
+          className="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center space-x-2 text-slate-700 dark:text-slate-300"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+          </svg>
+          <span>Add Rückseite</span>
         </button>
       )}
 

@@ -36,6 +36,7 @@ export default function TextBlockContent({
   projectSettings
 }: TextBlockContentProps) {
   const textContent = block.content.textContent || { spans: [] };
+  const backTextContent = block.content.rückseiteTextContent || { spans: [] };
   const [showSettings, setShowSettings] = useState(false);
   const overlayComment = useOverlayComment(block, onUpdate);
 
@@ -49,18 +50,55 @@ export default function TextBlockContent({
     });
   };
 
+  const handleBackTextChange = (newText: RichText) => {
+    onUpdate({
+      ...block,
+      content: {
+        ...block.content,
+        rückseiteTextContent: newText
+      }
+    });
+  };
+
+  const handleFlip = () => {
+    onUpdate({
+      ...block,
+      isFlipped: !block.isFlipped
+    });
+  };
+
   return (
     <div 
       className={`group relative py-2 ${isDragging ? 'opacity-50' : ''}`}
     >
+      {/* Side indicator for Rückseite */}
+      {block.hasRückseite && (
+        <div className="absolute -left-6 top-2 text-xs text-slate-400 font-mono">
+          {block.isFlipped ? 'R' : 'V'}
+        </div>
+      )}
+      
       {/* Overlay Comment Indicator */}
       <OverlayCommentIndicator
         hasComment={!!block.overlayComment}
         onClick={() => overlayComment.setShowOverlayComment(true)}
       />
 
-      {/* Settings button */}
-      <div className="absolute -right-8 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
+      {/* Settings button and flip button */}
+      <div className="absolute -right-8 top-2 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col space-y-1">
+        {/* Flip button */}
+        {block.hasRückseite && (
+          <button
+            onClick={handleFlip}
+            className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+            title="Flip card"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </button>
+        )}
+        
         <button
           onClick={() => setShowSettings(!showSettings)}
           className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
@@ -89,16 +127,29 @@ export default function TextBlockContent({
 
       {/* Text block with rich text editor */}
       <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg">
-        <SlateEditor
-          content={textContent}
-          onChange={handleTextChange}
-          placeholder="Write your longer text content here. This block is perfect for paragraphs, detailed explanations, and extended writing..."
-          className="bg-slate-50 dark:bg-slate-800/50"
-          multiline={true}
-          blockId={block.id}
-          composableId={block.composableId}
-          projectSettings={projectSettings}
-        />
+        {!block.hasRückseite || !block.isFlipped ? (
+          <SlateEditor
+            content={textContent}
+            onChange={handleTextChange}
+            placeholder="Write your longer text content here. This block is perfect for paragraphs, detailed explanations, and extended writing..."
+            className="bg-slate-50 dark:bg-slate-800/50"
+            multiline={true}
+            blockId={block.id}
+            composableId={block.composableId}
+            projectSettings={projectSettings}
+          />
+        ) : (
+          <SlateEditor
+            content={backTextContent}
+            onChange={handleBackTextChange}
+            placeholder="Write back side content here..."
+            className="bg-slate-50 dark:bg-slate-800/50"
+            multiline={true}
+            blockId={block.id}
+            composableId={block.composableId}
+            projectSettings={projectSettings}
+          />
+        )}
       </div>
 
       {/* Overlay Comment Modal */}
