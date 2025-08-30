@@ -50,15 +50,6 @@ export default function TextBlock({
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
     >
-      {/* Drag handle */}
-      <div 
-        className="absolute -left-8 top-2 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
-        onMouseDown={(e) => e.stopPropagation()}
-      >
-        <svg className="w-3 h-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M7 2a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM7 8a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM7 14a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM13 2a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM13 8a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM13 14a2 2 0 1 1 0 4 2 2 0 0 1 0-4z" />
-        </svg>
-      </div>
 
       {/* Settings button */}
       <div className="absolute -right-8 top-0 opacity-0 group-hover:opacity-100 transition-opacity">

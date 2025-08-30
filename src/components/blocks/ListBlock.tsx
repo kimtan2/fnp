@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { ContentBlock, ListType, ListItem, RichText } from '@/lib/types';
 import BasicTextInput from '@/components/BasicTextInput';
-import BlockSettingsMenu from '@/components/BlockSettingsMenu';
 
 interface ListBlockProps {
   block: ContentBlock;
@@ -12,10 +11,6 @@ interface ListBlockProps {
   onDragStart: () => void;
   onDragEnd: () => void;
   isDragging: boolean;
-  onMoveUp?: () => void;
-  onMoveDown?: () => void;
-  canMoveUp?: boolean;
-  canMoveDown?: boolean;
 }
 
 export default function ListBlock({
@@ -24,14 +19,9 @@ export default function ListBlock({
   onDelete,
   onDragStart,
   onDragEnd,
-  isDragging,
-  onMoveUp,
-  onMoveDown,
-  canMoveUp,
-  canMoveDown
+  isDragging
 }: ListBlockProps) {
   const [showTypeMenu, setShowTypeMenu] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
 
   const listType = block.content.listType || 'bullet';
   const listItems = block.content.listItems || [];
@@ -155,15 +145,6 @@ export default function ListBlock({
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
     >
-      {/* Drag handle */}
-      <div 
-        className="absolute -left-6 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
-        onMouseDown={(e) => e.stopPropagation()}
-      >
-        <svg className="w-4 h-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M7 2a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM7 8a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM7 14a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM13 2a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM13 8a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM13 14a2 2 0 1 1 0 4 2 2 0 0 1 0-4z" />
-        </svg>
-      </div>
 
       {/* List type selector and delete */}
       <div className="absolute -right-24 top-2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center space-x-1">
