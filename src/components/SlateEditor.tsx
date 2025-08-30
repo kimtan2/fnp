@@ -132,12 +132,6 @@ const Leaf = ({ attributes, children, leaf, comments }: RenderLeafProps & { comm
     const comment = comments?.find((c: Comment) => c.id === leaf.commentId);
     const commentColor = comment?.color || '#FEF08A';
     
-    // Debug logging
-    if (comment) {
-      console.log('Rendering comment with color:', commentColor, 'for comment:', comment);
-    } else {
-      console.log('Comment not found for ID:', leaf.commentId, 'available comments:', comments?.length);
-    }
     
     return (
       <span 
@@ -536,6 +530,7 @@ export default function SlateEditor({
   projectSettings
 }: SlateEditorProps) {
   const [comments, setComments] = useState<Comment[]>([]);
+  const [viewerComments, setViewerComments] = useState<Comment[]>([]);
   const [showCommentModal, setShowCommentModal] = useState(false);
   const [showCommentViewer, setShowCommentViewer] = useState(false);
   const [selectedText, setSelectedText] = useState('');
@@ -655,7 +650,6 @@ export default function SlateEditor({
       if (blockId) {
         try {
           const blockComments = await unifiedDB.getCommentsByBlock(blockId);
-          console.log('Loaded comments for block:', blockId, blockComments); // Debug log
           setComments(blockComments);
         } catch (error) {
           console.error('Failed to load comments:', error);
@@ -675,17 +669,14 @@ export default function SlateEditor({
 
   const handleCommentSave = async (commentData: Omit<Comment, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
-      console.log('Saving comment with data:', commentData); // Debug log
       if (editingComment) {
         // Update existing comment
         const updatedComment = { ...editingComment, ...commentData };
-        console.log('Updating comment:', updatedComment); // Debug log
         await unifiedDB.updateComment(updatedComment);
         setComments(comments.map(c => c.id === editingComment.id ? updatedComment : c));
       } else {
         // Create new comment
         const newComment = await unifiedDB.addComment(commentData);
-        console.log('Created new comment:', newComment); // Debug log
         setComments([...comments, newComment]);
         
         // Add commentId to the selected text
@@ -729,6 +720,7 @@ export default function SlateEditor({
     try {
       await unifiedDB.deleteComment(commentId);
       setComments(comments.filter(c => c.id !== commentId));
+      setViewerComments(viewerComments.filter(c => c.id !== commentId));
       
       // Remove commentId from text
       // This would require more complex logic to find and remove the mark
@@ -744,6 +736,7 @@ export default function SlateEditor({
         const updatedComment = { ...comment, resolved };
         await unifiedDB.updateComment(updatedComment);
         setComments(comments.map(c => c.id === commentId ? updatedComment : c));
+        setViewerComments(viewerComments.map(c => c.id === commentId ? updatedComment : c));
       }
     } catch (error) {
       console.error('Failed to update comment:', error);
@@ -751,18 +744,13 @@ export default function SlateEditor({
   };
 
   const handleCommentClick = (commentId: string) => {
-    console.log('Comment clicked:', commentId); // Debug log
-    console.log('Available comments:', comments); // Debug log
     const comment = comments.find(c => c.id === commentId);
-    console.log('Found comment:', comment); // Debug log
     
     if (comment) {
       const commentsForText = comments.filter(c => 
         c.position?.start === comment.position?.start && 
         c.position?.end === comment.position?.end
       );
-      
-      console.log('Comments for text:', commentsForText); // Debug log
       
       // Get the selected text based on comment position
       const textSpans = content.spans || [];
@@ -780,12 +768,9 @@ export default function SlateEditor({
         currentPos = spanEnd;
       }
 
-      console.log('Selected text:', selectedText); // Debug log
       setSelectedText(selectedText);
-      setComments(commentsForText);
+      setViewerComments(commentsForText);
       setShowCommentViewer(true);
-    } else {
-      console.log('Comment not found in comments array:', comments); // Debug log
     }
   };
 
@@ -965,7 +950,7 @@ export default function SlateEditor({
       {/* Comment Viewer */}
       {showCommentViewer && (
         <CommentViewer
-          comments={comments}
+          comments={viewerComments}
           isOpen={showCommentViewer}
           onClose={() => setShowCommentViewer(false)}
           onEditComment={handleCommentEdit}
