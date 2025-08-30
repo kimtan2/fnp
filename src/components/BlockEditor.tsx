@@ -8,6 +8,7 @@ import ListBlock from '@/components/blocks/ListBlock';
 import DividerBlock from '@/components/blocks/DividerBlock';
 import CollapsibleListBlock from '@/components/blocks/CollapsibleListBlock';
 import TextBlockContent from '@/components/blocks/TextBlockContent';
+import MarkdownBlock from '@/components/blocks/MarkdownBlock';
 import AddBlockMenu from '@/components/AddBlockMenu';
 
 interface BlockEditorProps {
@@ -279,6 +280,10 @@ export default function BlockEditor({
         return {
           textContent: { spans: [{ text: 'Write your longer text content here. This block is perfect for paragraphs, detailed explanations, and extended writing.' }] }
         };
+      case 'markdown':
+        return {
+          markdownContent: '# New Markdown Block\n\nDouble-click to edit this markdown content...'
+        };
       default:
         return {};
     }
@@ -463,6 +468,9 @@ export default function BlockEditor({
             case 'text-block':
               NestedBlockComponent = TextBlockContent;
               break;
+            case 'markdown':
+              NestedBlockComponent = MarkdownBlock;
+              break;
             default:
               return null;
           }
@@ -498,6 +506,9 @@ export default function BlockEditor({
         break;
       case 'text-block':
         BlockComponent = TextBlockContent;
+        break;
+      case 'markdown':
+        BlockComponent = MarkdownBlock;
         break;
       default:
         return null;

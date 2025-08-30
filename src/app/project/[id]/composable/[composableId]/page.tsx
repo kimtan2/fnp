@@ -158,6 +158,10 @@ export default function ComposableDetailPage() {
         return {
           textContent: { spans: [{ text: 'Write your longer text content here. This block is perfect for paragraphs, detailed explanations, and extended writing.' }] }
         };
+      case 'markdown':
+        return {
+          markdownContent: '# New Markdown Block\n\nDouble-click to edit this markdown content...'
+        };
       default:
         return {};
     }

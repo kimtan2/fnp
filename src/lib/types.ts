@@ -34,7 +34,8 @@ export type BlockType =
   | 'list' 
   | 'divider' 
   | 'collapsible-list' 
-  | 'text-block';
+  | 'text-block'
+  | 'markdown';
 
 export type ListType = 'bullet' | 'numbered' | 'checklist';
 export type HeaderSize = 'h1' | 'h2' | 'h3';
@@ -97,6 +98,9 @@ export interface ContentBlock {
     
     // Text block (longer content)
     textContent?: RichText;
+    
+    // Markdown block
+    markdownContent?: string;
     
     // Styling
     backgroundColor?: string;
