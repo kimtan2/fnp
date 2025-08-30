@@ -12,6 +12,10 @@ interface ListBlockProps {
   onDragStart: () => void;
   onDragEnd: () => void;
   isDragging: boolean;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
 }
 
 export default function ListBlock({
@@ -20,7 +24,11 @@ export default function ListBlock({
   onDelete,
   onDragStart,
   onDragEnd,
-  isDragging
+  isDragging,
+  onMoveUp,
+  onMoveDown,
+  canMoveUp,
+  canMoveDown
 }: ListBlockProps) {
   const [showTypeMenu, setShowTypeMenu] = useState(false);
   const [showSettings, setShowSettings] = useState(false);

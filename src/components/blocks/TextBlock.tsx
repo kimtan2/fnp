@@ -12,6 +12,10 @@ interface TextBlockProps {
   onDragStart: () => void;
   onDragEnd: () => void;
   isDragging: boolean;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
 }
 
 export default function TextBlock({
@@ -20,7 +24,11 @@ export default function TextBlock({
   onDelete,
   onDragStart,
   onDragEnd,
-  isDragging
+  isDragging,
+  onMoveUp,
+  onMoveDown,
+  canMoveUp,
+  canMoveDown
 }: TextBlockProps) {
   const text = block.content.text || { spans: [] };
   const [showSettings, setShowSettings] = useState(false);
@@ -71,6 +79,10 @@ export default function TextBlock({
             onDelete={onDelete}
             onUpdate={onUpdate}
             onClose={() => setShowSettings(false)}
+            onMoveUp={onMoveUp}
+            onMoveDown={onMoveDown}
+            canMoveUp={canMoveUp}
+            canMoveDown={canMoveDown}
           />
         )}
       </div>

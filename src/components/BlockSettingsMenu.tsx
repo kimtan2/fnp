@@ -8,6 +8,10 @@ interface BlockSettingsMenuProps {
   onDelete: () => void;
   onUpdate: (block: ContentBlock) => void;
   onClose: () => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
 }
 
 const BLOCK_COLORS = [
@@ -22,7 +26,7 @@ const BLOCK_COLORS = [
   { name: 'Pink', value: 'pink', bg: 'bg-pink-50', border: 'border-pink-200' },
 ];
 
-export default function BlockSettingsMenu({ block, onDelete, onUpdate, onClose }: BlockSettingsMenuProps) {
+export default function BlockSettingsMenu({ block, onDelete, onUpdate, onClose, onMoveUp, onMoveDown, canMoveUp, canMoveDown }: BlockSettingsMenuProps) {
   const [showColorPicker, setShowColorPicker] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -75,6 +79,51 @@ export default function BlockSettingsMenu({ block, onDelete, onUpdate, onClose }
       ref={menuRef}
       className="absolute right-0 top-8 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg shadow-lg z-50 min-w-48 py-1"
     >
+      {/* Move Up option */}
+      {onMoveUp && (
+        <button
+          onClick={() => {
+            onMoveUp();
+            onClose();
+          }}
+          disabled={!canMoveUp}
+          className={`w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center space-x-2 ${
+            !canMoveUp 
+              ? 'text-slate-400 dark:text-slate-500 cursor-not-allowed' 
+              : 'text-slate-700 dark:text-slate-300'
+          }`}
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+          </svg>
+          <span>Move Up</span>
+        </button>
+      )}
+
+      {/* Move Down option */}
+      {onMoveDown && (
+        <button
+          onClick={() => {
+            onMoveDown();
+            onClose();
+          }}
+          disabled={!canMoveDown}
+          className={`w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center space-x-2 ${
+            !canMoveDown 
+              ? 'text-slate-400 dark:text-slate-500 cursor-not-allowed' 
+              : 'text-slate-700 dark:text-slate-300'
+          }`}
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+          <span>Move Down</span>
+        </button>
+      )}
+
+      {/* Divider */}
+      {(onMoveUp || onMoveDown) && <div className="border-t border-slate-200 dark:border-slate-600 my-1"></div>}
+
       {/* Delete option */}
       <button
         onClick={handleDelete}

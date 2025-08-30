@@ -12,6 +12,10 @@ interface HeaderBlockProps {
   onDragStart: () => void;
   onDragEnd: () => void;
   isDragging: boolean;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
 }
 
 export default function HeaderBlock({
@@ -20,7 +24,11 @@ export default function HeaderBlock({
   onDelete,
   onDragStart,
   onDragEnd,
-  isDragging
+  isDragging,
+  onMoveUp,
+  onMoveDown,
+  canMoveUp,
+  canMoveDown
 }: HeaderBlockProps) {
   const [showSizeMenu, setShowSizeMenu] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -135,6 +143,10 @@ export default function HeaderBlock({
                 onDelete={onDelete}
                 onUpdate={onUpdate}
                 onClose={() => setShowSettings(false)}
+                onMoveUp={onMoveUp}
+                onMoveDown={onMoveDown}
+                canMoveUp={canMoveUp}
+                canMoveDown={canMoveDown}
               />
             )}
           </div>

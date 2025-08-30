@@ -17,7 +17,16 @@ interface CollapsibleListBlockProps {
   onUpdateNestedBlock?: (nestedBlock: ContentBlock) => void;
   onDeleteNestedBlock?: (nestedBlockId: string) => void;
   onReorderNestedBlocks?: (parentBlockId: string, newOrder: string[]) => void;
-  renderNestedBlock?: (block: ContentBlock, index: number) => React.ReactNode;
+  renderNestedBlock?: (block: ContentBlock, index: number, moveProps?: {
+    onMoveUp: () => void;
+    onMoveDown: () => void;
+    canMoveUp: boolean;
+    canMoveDown: boolean;
+  }) => React.ReactNode;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
 }
 
 export default function CollapsibleListBlock({
@@ -31,7 +40,11 @@ export default function CollapsibleListBlock({
   onUpdateNestedBlock,
   onDeleteNestedBlock,
   onReorderNestedBlocks,
-  renderNestedBlock
+  renderNestedBlock,
+  onMoveUp,
+  onMoveDown,
+  canMoveUp,
+  canMoveDown
 }: CollapsibleListBlockProps) {
   const title = block.content.title || { spans: [{ text: 'Toggle section' }] };
   const isExpanded = block.content.isExpanded ?? false;
@@ -48,6 +61,48 @@ export default function CollapsibleListBlock({
       }
     });
   };
+
+  const handleMoveNestedBlockUp = useCallback((nestedBlockId: string) => {
+    const currentIndex = nestedBlocks.findIndex(nb => nb.id === nestedBlockId);
+    if (currentIndex <= 0) return; // Can't move up if it's the first nested block
+    
+    const newNestedBlocks = [...nestedBlocks];
+    [newNestedBlocks[currentIndex - 1], newNestedBlocks[currentIndex]] = [newNestedBlocks[currentIndex], newNestedBlocks[currentIndex - 1]];
+    
+    // Update positions
+    newNestedBlocks.forEach((nb, index) => {
+      nb.position = index;
+    });
+    
+    onUpdate({
+      ...block,
+      content: {
+        ...block.content,
+        nestedBlocks: newNestedBlocks
+      }
+    });
+  }, [nestedBlocks, block, onUpdate]);
+
+  const handleMoveNestedBlockDown = useCallback((nestedBlockId: string) => {
+    const currentIndex = nestedBlocks.findIndex(nb => nb.id === nestedBlockId);
+    if (currentIndex >= nestedBlocks.length - 1) return; // Can't move down if it's the last nested block
+    
+    const newNestedBlocks = [...nestedBlocks];
+    [newNestedBlocks[currentIndex], newNestedBlocks[currentIndex + 1]] = [newNestedBlocks[currentIndex + 1], newNestedBlocks[currentIndex]];
+    
+    // Update positions
+    newNestedBlocks.forEach((nb, index) => {
+      nb.position = index;
+    });
+    
+    onUpdate({
+      ...block,
+      content: {
+        ...block.content,
+        nestedBlocks: newNestedBlocks
+      }
+    });
+  }, [nestedBlocks, block, onUpdate]);
 
   const toggleExpanded = () => {
     onUpdate({
@@ -116,6 +171,10 @@ export default function CollapsibleListBlock({
             onDelete={onDelete}
             onUpdate={onUpdate}
             onClose={() => setShowSettings(false)}
+            onMoveUp={onMoveUp}
+            onMoveDown={onMoveDown}
+            canMoveUp={canMoveUp}
+            canMoveDown={canMoveDown}
           />
         )}
       </div>
@@ -213,7 +272,12 @@ export default function CollapsibleListBlock({
                 </div>
 
                 {/* Render the nested block */}
-                {renderNestedBlock ? renderNestedBlock(nestedBlock, index) : (
+                {renderNestedBlock ? renderNestedBlock(nestedBlock, index, {
+                  onMoveUp: () => handleMoveNestedBlockUp(nestedBlock.id),
+                  onMoveDown: () => handleMoveNestedBlockDown(nestedBlock.id),
+                  canMoveUp: index > 0,
+                  canMoveDown: index < nestedBlocks.length - 1
+                }) : (
                   <div className="text-slate-400 text-sm">
                     Nested block rendering not implemented
                   </div>

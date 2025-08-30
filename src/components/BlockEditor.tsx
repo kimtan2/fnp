@@ -296,14 +296,44 @@ export default function BlockEditor({
     return colorMap[color] || 'transparent';
   };
 
+  const handleMoveUp = useCallback((blockId: string) => {
+    const currentIndex = blocks.findIndex(b => b.id === blockId);
+    if (currentIndex <= 0) return; // Can't move up if it's the first block
+    
+    const newBlocks = [...blocks];
+    [newBlocks[currentIndex - 1], newBlocks[currentIndex]] = [newBlocks[currentIndex], newBlocks[currentIndex - 1]];
+    
+    const newOrder = newBlocks.map(b => b.id);
+    onReorderBlocks(newOrder);
+  }, [blocks, onReorderBlocks]);
+
+  const handleMoveDown = useCallback((blockId: string) => {
+    const currentIndex = blocks.findIndex(b => b.id === blockId);
+    if (currentIndex >= blocks.length - 1) return; // Can't move down if it's the last block
+    
+    const newBlocks = [...blocks];
+    [newBlocks[currentIndex], newBlocks[currentIndex + 1]] = [newBlocks[currentIndex + 1], newBlocks[currentIndex]];
+    
+    const newOrder = newBlocks.map(b => b.id);
+    onReorderBlocks(newOrder);
+  }, [blocks, onReorderBlocks]);
+
   const renderBlock = (block: ContentBlock, index: number, isNested = false, parentBlockId?: string) => {
+    const currentIndex = blocks.findIndex(b => b.id === block.id);
+    const canMoveUp = !isNested && currentIndex > 0;
+    const canMoveDown = !isNested && currentIndex < blocks.length - 1;
+    
     const blockProps = {
       block,
       onUpdate: isNested ? handleUpdateNestedBlock : onUpdateBlock, // KEY FIX: Different handlers for nested vs top-level blocks
       onDelete: isNested ? () => handleDeleteNestedBlock(block.id) : () => onDeleteBlock(block.id),
       onDragStart: () => handleDragStart(block.id),
       onDragEnd: handleDragEnd,
-      isDragging: draggedBlockId === block.id
+      isDragging: draggedBlockId === block.id,
+      onMoveUp: !isNested ? () => handleMoveUp(block.id) : undefined,
+      onMoveDown: !isNested ? () => handleMoveDown(block.id) : undefined,
+      canMoveUp,
+      canMoveDown
     };
 
     let BlockComponent;
@@ -394,7 +424,74 @@ export default function BlockEditor({
           (blockProps as any).onDeleteNestedBlock = handleDeleteNestedBlock;
           (blockProps as any).onReorderNestedBlocks = handleReorderNestedBlocks;
         }
-        (blockProps as any).renderNestedBlock = (nestedBlock: ContentBlock, nestedIndex: number) => renderBlock(nestedBlock, nestedIndex, true, block.id);
+        (blockProps as any).renderNestedBlock = (nestedBlock: ContentBlock, nestedIndex: number, moveProps?: {
+          onMoveUp: () => void;
+          onMoveDown: () => void;
+          canMoveUp: boolean;
+          canMoveDown: boolean;
+        }) => {
+          // For nested blocks, we pass the move props if provided
+          const nestedBlockProps = {
+            ...renderBlock(nestedBlock, nestedIndex, true, block.id)?.props,
+            onMoveUp: moveProps?.onMoveUp,
+            onMoveDown: moveProps?.onMoveDown,
+            canMoveUp: moveProps?.canMoveUp,
+            canMoveDown: moveProps?.canMoveDown
+          };
+          
+          // We need to render the block component directly since renderBlock returns JSX
+          let NestedBlockComponent;
+          switch (nestedBlock.type) {
+            case 'header':
+              NestedBlockComponent = HeaderBlock;
+              break;
+            case 'text':
+              NestedBlockComponent = TextBlock;
+              break;
+            case 'list':
+              NestedBlockComponent = ListBlock;
+              break;
+            case 'divider':
+              NestedBlockComponent = DividerBlock;
+              break;
+            case 'collapsible-list':
+              NestedBlockComponent = CollapsibleListBlock;
+              break;
+            case 'text-block':
+              NestedBlockComponent = TextBlockContent;
+              break;
+            default:
+              return null;
+          }
+          
+          const baseProps = {
+            block: nestedBlock,
+            onUpdate: handleUpdateNestedBlock,
+            onDelete: () => handleDeleteNestedBlock(nestedBlock.id),
+            onDragStart: () => handleDragStart(nestedBlock.id),
+            onDragEnd: handleDragEnd,
+            isDragging: draggedBlockId === nestedBlock.id,
+            onMoveUp: moveProps?.onMoveUp,
+            onMoveDown: moveProps?.onMoveDown,
+            canMoveUp: moveProps?.canMoveUp,
+            canMoveDown: moveProps?.canMoveDown
+          };
+          
+          // Add additional props for collapsible blocks
+          if (nestedBlock.type === 'collapsible-list') {
+            (baseProps as any).onAddNestedBlock = handleAddNestedBlock;
+            (baseProps as any).onUpdateNestedBlock = handleUpdateNestedBlock;
+            (baseProps as any).onDeleteNestedBlock = handleDeleteNestedBlock;
+            (baseProps as any).onReorderNestedBlocks = handleReorderNestedBlocks;
+            (baseProps as any).renderNestedBlock = (deepNestedBlock: ContentBlock, deepNestedIndex: number) => renderBlock(deepNestedBlock, deepNestedIndex, true, nestedBlock.id);
+          }
+          
+          return (
+            <div key={nestedBlock.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/50 rounded-lg -mx-2 px-2">
+              <NestedBlockComponent {...baseProps} />
+            </div>
+          );
+        };
         break;
       case 'text-block':
         BlockComponent = TextBlockContent;
