@@ -769,9 +769,18 @@ export default function SlateEditor({
       }
 
       setSelectedText(selectedText);
+      setSelectedTextPosition(comment.position || { start: 0, end: 0 });
       setViewerComments(commentsForText);
       setShowCommentViewer(true);
     }
+  };
+
+  const handleAddCommentFromViewer = () => {
+    // Close the viewer and open the comment modal to add a new comment
+    // Use the current selectedText and selectedTextPosition from the viewer context
+    setShowCommentViewer(false);
+    setEditingComment(undefined);
+    setShowCommentModal(true);
   };
 
   const handleChange = useCallback((value: Descendant[]) => {
@@ -956,6 +965,7 @@ export default function SlateEditor({
           onEditComment={handleCommentEdit}
           onDeleteComment={handleCommentDelete}
           onResolveComment={handleCommentResolve}
+          onAddComment={handleAddCommentFromViewer}
           selectedText={selectedText}
         />
       )}

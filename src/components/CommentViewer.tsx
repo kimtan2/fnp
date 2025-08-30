@@ -10,6 +10,7 @@ interface CommentViewerProps {
   onEditComment: (comment: Comment) => void;
   onDeleteComment: (commentId: string) => void;
   onResolveComment: (commentId: string, resolved: boolean) => void;
+  onAddComment?: () => void;
   selectedText: string;
 }
 
@@ -20,6 +21,7 @@ export default function CommentViewer({
   onEditComment,
   onDeleteComment,
   onResolveComment,
+  onAddComment,
   selectedText
 }: CommentViewerProps) {
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
@@ -53,14 +55,27 @@ export default function CommentViewer({
             <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
               Comments ({comments.length})
             </h3>
-            <button
-              onClick={onClose}
-              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            <div className="flex items-center gap-2">
+              {onAddComment && (
+                <button
+                  onClick={onAddComment}
+                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded"
+                  title="Add new comment"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                </button>
+              )}
+              <button
+                onClick={onClose}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           
