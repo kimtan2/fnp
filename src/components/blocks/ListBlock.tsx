@@ -4,6 +4,9 @@ import { useState } from 'react';
 import { ContentBlock, ListType, ListItem, RichText } from '@/lib/types';
 import BasicTextInput from '@/components/BasicTextInput';
 import BlockSettingsMenu from '@/components/BlockSettingsMenu';
+import OverlayCommentModal from '@/components/OverlayCommentModal';
+import OverlayCommentIndicator from '@/components/OverlayCommentIndicator';
+import { useOverlayComment } from '@/hooks/useOverlayComment';
 
 interface ListBlockProps {
   block: ContentBlock;
@@ -32,6 +35,7 @@ export default function ListBlock({
 }: ListBlockProps) {
   const [showTypeMenu, setShowTypeMenu] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const overlayComment = useOverlayComment(block, onUpdate);
 
   const listType = block.content.listType || 'bullet';
   const listItems = block.content.listItems || [];
@@ -151,8 +155,13 @@ export default function ListBlock({
   return (
     <div 
       className={`group relative py-2 ${isDragging ? 'opacity-50' : ''}`}
-      
     >
+      {/* Overlay Comment Indicator */}
+      <OverlayCommentIndicator
+        hasComment={!!block.overlayComment}
+        onClick={() => overlayComment.setShowOverlayComment(true)}
+        position="-right-36"
+      />
 
       {/* List type selector and settings */}
       <div className="absolute -right-32 top-2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center space-x-1">
@@ -204,6 +213,7 @@ export default function ListBlock({
               onMoveDown={onMoveDown}
               canMoveUp={canMoveUp}
               canMoveDown={canMoveDown}
+              onAddOverlayComment={overlayComment.handleAddOverlayComment}
             />
           )}
         </div>
@@ -258,6 +268,22 @@ export default function ListBlock({
           onClick={() => setShowTypeMenu(false)}
         />
       )}
+
+      {/* Overlay Comment Modal */}
+      <OverlayCommentModal
+        isOpen={overlayComment.showOverlayComment || overlayComment.editingOverlayComment}
+        isEditing={overlayComment.editingOverlayComment}
+        commentText={overlayComment.overlayCommentText}
+        onCommentTextChange={overlayComment.setOverlayCommentText}
+        onSave={overlayComment.handleSaveOverlayComment}
+        onCancel={overlayComment.handleCancelOverlayComment}
+        onEdit={() => overlayComment.setEditingOverlayComment(true)}
+        onDelete={overlayComment.handleDeleteOverlayComment}
+        onClose={() => {
+          overlayComment.setShowOverlayComment(false);
+          overlayComment.setEditingOverlayComment(false);
+        }}
+      />
     </div>
   );
 }

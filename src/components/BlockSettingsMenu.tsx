@@ -12,6 +12,7 @@ interface BlockSettingsMenuProps {
   onMoveDown?: () => void;
   canMoveUp?: boolean;
   canMoveDown?: boolean;
+  onAddOverlayComment?: () => void;
 }
 
 const BLOCK_COLORS = [
@@ -26,7 +27,7 @@ const BLOCK_COLORS = [
   { name: 'Pink', value: 'pink', bg: 'bg-pink-50', border: 'border-pink-200' },
 ];
 
-export default function BlockSettingsMenu({ block, onDelete, onUpdate, onClose, onMoveUp, onMoveDown, canMoveUp, canMoveDown }: BlockSettingsMenuProps) {
+export default function BlockSettingsMenu({ block, onDelete, onUpdate, onClose, onMoveUp, onMoveDown, canMoveUp, canMoveDown, onAddOverlayComment }: BlockSettingsMenuProps) {
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -154,6 +155,22 @@ export default function BlockSettingsMenu({ block, onDelete, onUpdate, onClose, 
         </svg>
         <span>Copy ID</span>
       </button>
+
+      {/* Overlay Comment option */}
+      {onAddOverlayComment && (
+        <button
+          onClick={() => {
+            onAddOverlayComment();
+            onClose();
+          }}
+          className="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center space-x-2 text-slate-700 dark:text-slate-300"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+          <span>Overlay Comment</span>
+        </button>
+      )}
 
       {/* Divider */}
       <div className="border-t border-slate-200 dark:border-slate-600 my-1"></div>

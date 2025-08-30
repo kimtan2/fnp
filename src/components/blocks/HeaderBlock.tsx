@@ -4,6 +4,9 @@ import { useState } from 'react';
 import { ContentBlock, HeaderSize, RichText } from '@/lib/types';
 import BasicTextInput from '@/components/BasicTextInput';
 import BlockSettingsMenu from '@/components/BlockSettingsMenu';
+import OverlayCommentModal from '@/components/OverlayCommentModal';
+import OverlayCommentIndicator from '@/components/OverlayCommentIndicator';
+import { useOverlayComment } from '@/hooks/useOverlayComment';
 
 interface HeaderBlockProps {
   block: ContentBlock;
@@ -32,6 +35,7 @@ export default function HeaderBlock({
 }: HeaderBlockProps) {
   const [showSizeMenu, setShowSizeMenu] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const overlayComment = useOverlayComment(block, onUpdate);
 
   const headerSize = block.content.headerSize || 'h1';
   const headerText = block.content.headerText || { spans: [] };
@@ -79,11 +83,17 @@ export default function HeaderBlock({
     }
   };
 
+
   return (
     <div 
-      className={`relative flex items-start py-2 ${isDragging ? 'opacity-50' : ''}`}
-      
+      className={`relative flex items-start py-2 group ${isDragging ? 'opacity-50' : ''}`}
     >
+      {/* Overlay Comment Indicator */}
+      <OverlayCommentIndicator
+        hasComment={!!block.overlayComment}
+        onClick={() => overlayComment.setShowOverlayComment(true)}
+        position="-right-24"
+      />
 
       <div className="flex-1 relative">
         {/* Header size selector */}
@@ -136,6 +146,7 @@ export default function HeaderBlock({
                 onMoveDown={onMoveDown}
                 canMoveUp={canMoveUp}
                 canMoveDown={canMoveDown}
+                onAddOverlayComment={overlayComment.handleAddOverlayComment}
               />
             )}
           </div>
@@ -158,6 +169,22 @@ export default function HeaderBlock({
           onClick={() => setShowSizeMenu(false)}
         />
       )}
+
+      {/* Overlay Comment Modal */}
+      <OverlayCommentModal
+        isOpen={overlayComment.showOverlayComment || overlayComment.editingOverlayComment}
+        isEditing={overlayComment.editingOverlayComment}
+        commentText={overlayComment.overlayCommentText}
+        onCommentTextChange={overlayComment.setOverlayCommentText}
+        onSave={overlayComment.handleSaveOverlayComment}
+        onCancel={overlayComment.handleCancelOverlayComment}
+        onEdit={() => overlayComment.setEditingOverlayComment(true)}
+        onDelete={overlayComment.handleDeleteOverlayComment}
+        onClose={() => {
+          overlayComment.setShowOverlayComment(false);
+          overlayComment.setEditingOverlayComment(false);
+        }}
+      />
     </div>
   );
 }

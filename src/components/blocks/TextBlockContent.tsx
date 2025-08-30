@@ -4,6 +4,9 @@ import { useState } from 'react';
 import { ContentBlock, RichText, ProjectSettings } from '@/lib/types';
 import SlateEditor from '@/components/SlateEditor';
 import BlockSettingsMenu from '@/components/BlockSettingsMenu';
+import OverlayCommentModal from '@/components/OverlayCommentModal';
+import OverlayCommentIndicator from '@/components/OverlayCommentIndicator';
+import { useOverlayComment } from '@/hooks/useOverlayComment';
 
 interface TextBlockContentProps {
   block: ContentBlock;
@@ -34,6 +37,7 @@ export default function TextBlockContent({
 }: TextBlockContentProps) {
   const textContent = block.content.textContent || { spans: [] };
   const [showSettings, setShowSettings] = useState(false);
+  const overlayComment = useOverlayComment(block, onUpdate);
 
   const handleTextChange = (newText: RichText) => {
     onUpdate({
@@ -48,8 +52,12 @@ export default function TextBlockContent({
   return (
     <div 
       className={`group relative py-2 ${isDragging ? 'opacity-50' : ''}`}
-     
     >
+      {/* Overlay Comment Indicator */}
+      <OverlayCommentIndicator
+        hasComment={!!block.overlayComment}
+        onClick={() => overlayComment.setShowOverlayComment(true)}
+      />
 
       {/* Settings button */}
       <div className="absolute -right-8 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -74,6 +82,7 @@ export default function TextBlockContent({
             onMoveDown={onMoveDown}
             canMoveUp={canMoveUp}
             canMoveDown={canMoveDown}
+            onAddOverlayComment={overlayComment.handleAddOverlayComment}
           />
         )}
       </div>
@@ -91,6 +100,22 @@ export default function TextBlockContent({
           projectSettings={projectSettings}
         />
       </div>
+
+      {/* Overlay Comment Modal */}
+      <OverlayCommentModal
+        isOpen={overlayComment.showOverlayComment || overlayComment.editingOverlayComment}
+        isEditing={overlayComment.editingOverlayComment}
+        commentText={overlayComment.overlayCommentText}
+        onCommentTextChange={overlayComment.setOverlayCommentText}
+        onSave={overlayComment.handleSaveOverlayComment}
+        onCancel={overlayComment.handleCancelOverlayComment}
+        onEdit={() => overlayComment.setEditingOverlayComment(true)}
+        onDelete={overlayComment.handleDeleteOverlayComment}
+        onClose={() => {
+          overlayComment.setShowOverlayComment(false);
+          overlayComment.setEditingOverlayComment(false);
+        }}
+      />
     </div>
   );
 }

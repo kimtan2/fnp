@@ -76,6 +76,7 @@ export interface ContentBlock {
   type: BlockType;
   position: number;
   parentBlockId?: string; // For nested blocks
+  overlayComment?: string; // For overlay comments
   content: {
     // Header block
     headerSize?: HeaderSize;

@@ -5,6 +5,9 @@ import { ContentBlock, RichText, BlockType, ProjectSettings } from '@/lib/types'
 import SlateEditor from '@/components/SlateEditor';
 import AddBlockMenu from '@/components/AddBlockMenu';
 import BlockSettingsMenu from '@/components/BlockSettingsMenu';
+import OverlayCommentModal from '@/components/OverlayCommentModal';
+import OverlayCommentIndicator from '@/components/OverlayCommentIndicator';
+import { useOverlayComment } from '@/hooks/useOverlayComment';
 
 interface CollapsibleListBlockProps {
   block: ContentBlock;
@@ -53,6 +56,7 @@ export default function CollapsibleListBlock({
   const nestedBlocks = block.content.nestedBlocks || [];
   const [showAddMenu, setShowAddMenu] = useState<{ position: number; show: boolean }>({ position: -1, show: false });
   const [showSettings, setShowSettings] = useState(false);
+  const overlayComment = useOverlayComment(block, onUpdate);
 
   const handleTitleChange = (newTitle: RichText) => {
     onUpdate({
@@ -140,8 +144,12 @@ export default function CollapsibleListBlock({
   return (
     <div 
       className={`group relative py-1 ${isDragging ? 'opacity-50' : ''}`}
-      
     >
+      {/* Overlay Comment Indicator */}
+      <OverlayCommentIndicator
+        hasComment={!!block.overlayComment}
+        onClick={() => overlayComment.setShowOverlayComment(true)}
+      />
 
       {/* Settings button */}
       <div className="absolute -right-8 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -166,6 +174,7 @@ export default function CollapsibleListBlock({
             onMoveDown={onMoveDown}
             canMoveUp={canMoveUp}
             canMoveDown={canMoveDown}
+            onAddOverlayComment={overlayComment.handleAddOverlayComment}
           />
         )}
       </div>
@@ -312,6 +321,22 @@ export default function CollapsibleListBlock({
           )}
         </div>
       )}
+
+      {/* Overlay Comment Modal */}
+      <OverlayCommentModal
+        isOpen={overlayComment.showOverlayComment || overlayComment.editingOverlayComment}
+        isEditing={overlayComment.editingOverlayComment}
+        commentText={overlayComment.overlayCommentText}
+        onCommentTextChange={overlayComment.setOverlayCommentText}
+        onSave={overlayComment.handleSaveOverlayComment}
+        onCancel={overlayComment.handleCancelOverlayComment}
+        onEdit={() => overlayComment.setEditingOverlayComment(true)}
+        onDelete={overlayComment.handleDeleteOverlayComment}
+        onClose={() => {
+          overlayComment.setShowOverlayComment(false);
+          overlayComment.setEditingOverlayComment(false);
+        }}
+      />
     </div>
   );
 }

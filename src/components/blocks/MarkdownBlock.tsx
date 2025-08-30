@@ -5,6 +5,9 @@ import { ContentBlock } from '@/lib/types';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import BlockSettingsMenu from '@/components/BlockSettingsMenu';
+import OverlayCommentModal from '@/components/OverlayCommentModal';
+import OverlayCommentIndicator from '@/components/OverlayCommentIndicator';
+import { useOverlayComment } from '@/hooks/useOverlayComment';
 
 interface MarkdownBlockProps {
   block: ContentBlock;
@@ -35,6 +38,7 @@ export default function MarkdownBlock({
   const [editValue, setEditValue] = useState(block.content.markdownContent || '');
   const [showSettings, setShowSettings] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const overlayComment = useOverlayComment(block, onUpdate);
 
   useEffect(() => {
     if (isEditing && textareaRef.current) {
@@ -92,8 +96,13 @@ export default function MarkdownBlock({
   return (
     <div
       className={`group relative py-2 ${isDragging ? 'opacity-50' : ''}`}
-     
     >
+      {/* Overlay Comment Indicator */}
+      <OverlayCommentIndicator
+        hasComment={!!block.overlayComment}
+        onClick={() => overlayComment.setShowOverlayComment(true)}
+      />
+
       {/* Settings button */}
       <div className="absolute -right-8 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
         <button
@@ -117,6 +126,7 @@ export default function MarkdownBlock({
             onMoveDown={onMoveDown}
             canMoveUp={canMoveUp}
             canMoveDown={canMoveDown}
+            onAddOverlayComment={overlayComment.handleAddOverlayComment}
           />
         )}
       </div>
@@ -229,6 +239,22 @@ export default function MarkdownBlock({
           )}
         </div>
       )}
+
+      {/* Overlay Comment Modal */}
+      <OverlayCommentModal
+        isOpen={overlayComment.showOverlayComment || overlayComment.editingOverlayComment}
+        isEditing={overlayComment.editingOverlayComment}
+        commentText={overlayComment.overlayCommentText}
+        onCommentTextChange={overlayComment.setOverlayCommentText}
+        onSave={overlayComment.handleSaveOverlayComment}
+        onCancel={overlayComment.handleCancelOverlayComment}
+        onEdit={() => overlayComment.setEditingOverlayComment(true)}
+        onDelete={overlayComment.handleDeleteOverlayComment}
+        onClose={() => {
+          overlayComment.setShowOverlayComment(false);
+          overlayComment.setEditingOverlayComment(false);
+        }}
+      />
     </div>
   );
 }
