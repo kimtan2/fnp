@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ContentBlock, RichText } from '@/lib/types';
+import { ContentBlock, RichText, ProjectSettings } from '@/lib/types';
 import SlateEditor from '@/components/SlateEditor';
 import BlockSettingsMenu from '@/components/BlockSettingsMenu';
 
@@ -16,6 +16,7 @@ interface TextBlockContentProps {
   onMoveDown?: () => void;
   canMoveUp?: boolean;
   canMoveDown?: boolean;
+  projectSettings?: ProjectSettings | null;
 }
 
 export default function TextBlockContent({
@@ -28,7 +29,8 @@ export default function TextBlockContent({
   onMoveUp,
   onMoveDown,
   canMoveUp,
-  canMoveDown
+  canMoveDown,
+  projectSettings
 }: TextBlockContentProps) {
   const textContent = block.content.textContent || { spans: [] };
   const [showSettings, setShowSettings] = useState(false);
@@ -86,6 +88,9 @@ export default function TextBlockContent({
           placeholder="Write your longer text content here. This block is perfect for paragraphs, detailed explanations, and extended writing..."
           className="bg-slate-50 dark:bg-slate-800/50"
           multiline={true}
+          blockId={block.id}
+          composableId={block.composableId}
+          projectSettings={projectSettings}
         />
       </div>
     </div>

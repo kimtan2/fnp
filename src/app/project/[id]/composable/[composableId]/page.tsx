@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Composable, Project, ContentBlock, BlockType } from '@/lib/types';
+import { Composable, Project, ContentBlock, BlockType, ProjectSettings } from '@/lib/types';
 import { unifiedDB } from '@/lib/unified-db';
 import ComposableHeader from '@/components/ComposableHeader';
 import BlockEditor from '@/components/BlockEditor';
@@ -16,6 +16,7 @@ export default function ComposableDetailPage() {
   const [project, setProject] = useState<Project | null>(null);
   const [composable, setComposable] = useState<Composable | null>(null);
   const [blocks, setBlocks] = useState<ContentBlock[]>([]);
+  const [projectSettings, setProjectSettings] = useState<ProjectSettings | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -25,10 +26,11 @@ export default function ComposableDetailPage() {
   const loadComposableData = async () => {
     try {
       setLoading(true);
-      const [projectData, composablesData, blocksData] = await Promise.all([
+      const [projectData, composablesData, blocksData, settingsData] = await Promise.all([
         unifiedDB.getAllProjects().then(projects => projects.find(p => p.id === projectId)),
         unifiedDB.getComposablesByProject(projectId).then(composables => composables.find(c => c.id === composableId)),
-        unifiedDB.getBlocksByComposable(composableId)
+        unifiedDB.getBlocksByComposable(composableId),
+        unifiedDB.getProjectSettings(projectId)
       ]);
 
       if (!projectData) {
@@ -44,6 +46,7 @@ export default function ComposableDetailPage() {
       setProject(projectData);
       setComposable(composablesData);
       setBlocks(blocksData);
+      setProjectSettings(settingsData);
     } catch (error) {
       console.error('Failed to load composable data:', error);
     } finally {
@@ -188,6 +191,7 @@ export default function ComposableDetailPage() {
             onUpdateBlock={handleUpdateBlock}
             onDeleteBlock={handleDeleteBlock}
             onReorderBlocks={handleReorderBlocks}
+            projectSettings={projectSettings}
           />
         </div>
       </main>

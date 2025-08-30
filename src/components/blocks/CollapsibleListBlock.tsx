@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { ContentBlock, RichText, BlockType } from '@/lib/types';
+import { ContentBlock, RichText, BlockType, ProjectSettings } from '@/lib/types';
 import SlateEditor from '@/components/SlateEditor';
 import AddBlockMenu from '@/components/AddBlockMenu';
 import BlockSettingsMenu from '@/components/BlockSettingsMenu';
@@ -27,6 +27,7 @@ interface CollapsibleListBlockProps {
   onMoveDown?: () => void;
   canMoveUp?: boolean;
   canMoveDown?: boolean;
+  projectSettings?: ProjectSettings | null;
 }
 
 export default function CollapsibleListBlock({
@@ -44,7 +45,8 @@ export default function CollapsibleListBlock({
   onMoveUp,
   onMoveDown,
   canMoveUp,
-  canMoveDown
+  canMoveDown,
+  projectSettings
 }: CollapsibleListBlockProps) {
   const title = block.content.title || { spans: [{ text: 'Toggle section' }] };
   const isExpanded = block.content.isExpanded ?? false;
@@ -195,6 +197,9 @@ export default function CollapsibleListBlock({
             placeholder="Toggle section"
             className="border-none bg-transparent"
             multiline={false}
+            blockId={block.id}
+            composableId={block.composableId}
+            projectSettings={projectSettings}
           />
         </div>
       </div>

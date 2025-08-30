@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ContentBlock, RichText } from '@/lib/types';
+import { ContentBlock, RichText, ProjectSettings } from '@/lib/types';
 import SlateEditor from '@/components/SlateEditor';
 import BlockSettingsMenu from '@/components/BlockSettingsMenu';
 
@@ -16,6 +16,7 @@ interface TextBlockProps {
   onMoveDown?: () => void;
   canMoveUp?: boolean;
   canMoveDown?: boolean;
+  projectSettings?: ProjectSettings | null;
 }
 
 export default function TextBlock({
@@ -28,7 +29,8 @@ export default function TextBlock({
   onMoveUp,
   onMoveDown,
   canMoveUp,
-  canMoveDown
+  canMoveDown,
+  projectSettings
 }: TextBlockProps) {
   const text = block.content.text || { spans: [] };
   const [showSettings, setShowSettings] = useState(false);
@@ -86,6 +88,9 @@ export default function TextBlock({
           placeholder="Type something..."
           className="border-none bg-transparent"
           multiline={true}
+          blockId={block.id}
+          composableId={block.composableId}
+          projectSettings={projectSettings}
         />
       </div>
     </div>

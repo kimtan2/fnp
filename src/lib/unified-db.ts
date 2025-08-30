@@ -347,6 +347,95 @@ class UnifiedDB {
       });
     });
   }
+
+  // Comments methods
+  async getCommentsByBlock(blockId: string): Promise<Comment[]> {
+    const db = await this.openDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(this.commentsStore, 'readonly');
+      const store = transaction.objectStore(this.commentsStore);
+      const index = store.index('blockId');
+      const request = index.getAll(blockId);
+
+      request.onsuccess = () => {
+        const comments = request.result.map((comment: Comment & { createdAt: string | Date; updatedAt: string | Date }) => ({
+          ...comment,
+          createdAt: new Date(comment.createdAt),
+          updatedAt: new Date(comment.updatedAt)
+        }));
+        resolve(comments);
+      };
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async getCommentsByComposable(composableId: string): Promise<Comment[]> {
+    const db = await this.openDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(this.commentsStore, 'readonly');
+      const store = transaction.objectStore(this.commentsStore);
+      const index = store.index('composableId');
+      const request = index.getAll(composableId);
+
+      request.onsuccess = () => {
+        const comments = request.result.map((comment: Comment & { createdAt: string | Date; updatedAt: string | Date }) => ({
+          ...comment,
+          createdAt: new Date(comment.createdAt),
+          updatedAt: new Date(comment.updatedAt)
+        }));
+        resolve(comments);
+      };
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async addComment(comment: Omit<Comment, 'id' | 'createdAt' | 'updatedAt'>): Promise<Comment> {
+    const newComment: Comment = {
+      ...comment,
+      id: crypto.randomUUID(),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    const db = await this.openDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(this.commentsStore, 'readwrite');
+      const store = transaction.objectStore(this.commentsStore);
+      const request = store.add(newComment);
+
+      request.onsuccess = () => resolve(newComment);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async updateComment(comment: Comment): Promise<void> {
+    const updatedComment = {
+      ...comment,
+      updatedAt: new Date()
+    };
+
+    const db = await this.openDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(this.commentsStore, 'readwrite');
+      const store = transaction.objectStore(this.commentsStore);
+      const request = store.put(updatedComment);
+
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async deleteComment(id: string): Promise<void> {
+    const db = await this.openDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(this.commentsStore, 'readwrite');
+      const store = transaction.objectStore(this.commentsStore);
+      const request = store.delete(id);
+
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
 }
 
 export const unifiedDB = new UnifiedDB();

@@ -50,6 +50,7 @@ export interface TextStyle {
   backgroundColor?: string;
   fontSize?: number;
   link?: string; // URL for links
+  commentId?: string; // ID of associated comment
 }
 
 export interface RichTextSpan {

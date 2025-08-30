@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { ContentBlock, BlockType } from '@/lib/types';
+import { ContentBlock, BlockType, ProjectSettings } from '@/lib/types';
 import HeaderBlock from '@/components/blocks/HeaderBlock';
 import TextBlock from '@/components/blocks/TextBlock';
 import ListBlock from '@/components/blocks/ListBlock';
@@ -16,6 +16,7 @@ interface BlockEditorProps {
   onUpdateBlock: (block: ContentBlock) => void;
   onDeleteBlock: (blockId: string) => void;
   onReorderBlocks: (newOrder: string[]) => void;
+  projectSettings?: ProjectSettings | null;
 }
 
 export default function BlockEditor({
@@ -23,7 +24,8 @@ export default function BlockEditor({
   onAddBlock,
   onUpdateBlock,
   onDeleteBlock,
-  onReorderBlocks
+  onReorderBlocks,
+  projectSettings
 }: BlockEditorProps) {
   const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
   const [dragOverPosition, setDragOverPosition] = useState<number | null>(null);
@@ -333,7 +335,8 @@ export default function BlockEditor({
       onMoveUp: !isNested ? () => handleMoveUp(block.id) : undefined,
       onMoveDown: !isNested ? () => handleMoveDown(block.id) : undefined,
       canMoveUp,
-      canMoveDown
+      canMoveDown,
+      projectSettings
     };
 
     let BlockComponent;

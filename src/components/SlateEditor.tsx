@@ -4,7 +4,10 @@ import React, { useCallback, useMemo, useState, useEffect, useRef } from 'react'
 import { createEditor, Descendant, Editor, Element as SlateElement, Transforms, Text, Range } from 'slate';
 import { Slate, Editable, withReact, RenderElementProps, RenderLeafProps, ReactEditor } from 'slate-react';
 import { withHistory } from 'slate-history';
-import { RichText, TextStyle } from '@/lib/types';
+import { RichText, TextStyle, Comment, ProjectSettings } from '@/lib/types';
+import { unifiedDB } from '@/lib/unified-db';
+import CommentModal from './CommentModal';
+import CommentViewer from './CommentViewer';
 
 interface SlateEditorProps {
   content: RichText;
@@ -12,6 +15,9 @@ interface SlateEditorProps {
   placeholder?: string;
   className?: string;
   multiline?: boolean;
+  blockId?: string;
+  composableId?: string;
+  projectSettings?: ProjectSettings | null;
 }
 
 interface CustomElement {
@@ -28,6 +34,7 @@ interface CustomText {
   code?: boolean;
   color?: string;
   link?: string;
+  commentId?: string;
 }
 
 declare module 'slate' {
@@ -101,11 +108,28 @@ const Leaf = ({ attributes, children, leaf }: RenderLeafProps) => {
         href={leaf.link}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300 cursor-pointer"
+        className={`text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300 cursor-pointer ${
+          leaf.commentId ? 'bg-yellow-100 dark:bg-yellow-900/30 border-b-2 border-yellow-400 dark:border-yellow-600' : ''
+        }`}
         style={style}
+        data-comment-id={leaf.commentId}
       >
         {children}
       </a>
+    );
+  }
+
+  if (leaf.commentId) {
+    return (
+      <span 
+        {...attributes} 
+        className="bg-yellow-100 dark:bg-yellow-900/30 border-b-2 border-yellow-400 dark:border-yellow-600 cursor-pointer hover:bg-yellow-200 dark:hover:bg-yellow-900/50"
+        style={style}
+        data-comment-id={leaf.commentId}
+        title="Click to view comment"
+      >
+        {children}
+      </span>
     );
   }
 
@@ -141,7 +165,19 @@ const ToolbarButton = ({
   </button>
 );
 
-const FloatingToolbar = ({ editor }: { editor: Editor }) => {
+const FloatingToolbar = ({ 
+  editor, 
+  blockId, 
+  composableId, 
+  projectSettings,
+  onCommentCreate 
+}: { 
+  editor: Editor;
+  blockId?: string;
+  composableId?: string;
+  projectSettings?: ProjectSettings | null;
+  onCommentCreate?: (selectedText: string, textPosition: { start: number; end: number }) => void;
+}) => {
   const toolbarRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
@@ -225,6 +261,26 @@ const FloatingToolbar = ({ editor }: { editor: Editor }) => {
     }
     setShowLinkInput(false);
     setLinkUrl('');
+  };
+
+  const handleComment = () => {
+    const { selection } = editor;
+    if (!selection || Range.isCollapsed(selection) || !onCommentCreate || !blockId || !composableId) {
+      return;
+    }
+
+    const selectedText = Editor.string(editor, selection);
+    if (!selectedText.trim()) return;
+
+    // Calculate text position within the block
+    const start = selection.anchor.offset;
+    const end = selection.focus.offset;
+    const textPosition = {
+      start: Math.min(start, end),
+      end: Math.max(start, end)
+    };
+
+    onCommentCreate(selectedText, textPosition);
   };
 
   useEffect(() => {
@@ -426,6 +482,22 @@ const FloatingToolbar = ({ editor }: { editor: Editor }) => {
           </div>
         )}
       </div>
+
+      {/* Comment button */}
+      {blockId && composableId && projectSettings && (
+        <>
+          <div className="w-px h-4 bg-slate-500 mx-1" />
+          <ToolbarButton
+            active={false}
+            onToggle={handleComment}
+            title="Add Comment"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+          </ToolbarButton>
+        </>
+      )}
     </div>
   );
 };
@@ -435,8 +507,18 @@ export default function SlateEditor({
   onChange,
   placeholder = 'Type something...',
   className = '',
-  multiline = false
+  multiline = false,
+  blockId,
+  composableId,
+  projectSettings
 }: SlateEditorProps) {
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [showCommentModal, setShowCommentModal] = useState(false);
+  const [showCommentViewer, setShowCommentViewer] = useState(false);
+  const [selectedText, setSelectedText] = useState('');
+  const [selectedTextPosition, setSelectedTextPosition] = useState<{ start: number; end: number }>({ start: 0, end: 0 });
+  const [editingComment, setEditingComment] = useState<Comment | undefined>();
+
   const editor = useMemo(
     () => withCustom(withHistory(withReact(createEditor()))),
     []
@@ -467,6 +549,7 @@ export default function SlateEditor({
             code: span.style?.code,
             color: span.style?.color,
             link: span.style?.link,
+            commentId: span.style?.commentId,
           });
         }
         
@@ -509,6 +592,7 @@ export default function SlateEditor({
             if (child.code) style.code = true;
             if (child.color) style.color = child.color;
             if (child.link) style.link = child.link;
+            if (child.commentId) style.commentId = child.commentId;
 
             spans.push({
               text: child.text,
@@ -541,6 +625,142 @@ export default function SlateEditor({
   const editorKey = useMemo(() => {
     return JSON.stringify(content.spans?.map(s => ({ text: s.text, hasStyle: !!s.style })) || []);
   }, [content]);
+
+  // Load comments when blockId changes
+  useEffect(() => {
+    const loadComments = async () => {
+      if (blockId) {
+        try {
+          const blockComments = await unifiedDB.getCommentsByBlock(blockId);
+          console.log('Loaded comments for block:', blockId, blockComments); // Debug log
+          setComments(blockComments);
+        } catch (error) {
+          console.error('Failed to load comments:', error);
+        }
+      }
+    };
+
+    loadComments();
+  }, [blockId]);
+
+  const handleCommentCreate = (selectedText: string, textPosition: { start: number; end: number }) => {
+    setSelectedText(selectedText);
+    setSelectedTextPosition(textPosition);
+    setEditingComment(undefined);
+    setShowCommentModal(true);
+  };
+
+  const handleCommentSave = async (commentData: Omit<Comment, 'id' | 'createdAt' | 'updatedAt'>) => {
+    try {
+      if (editingComment) {
+        // Update existing comment
+        const updatedComment = { ...editingComment, ...commentData };
+        await unifiedDB.updateComment(updatedComment);
+        setComments(comments.map(c => c.id === editingComment.id ? updatedComment : c));
+      } else {
+        // Create new comment
+        const newComment = await unifiedDB.addComment(commentData);
+        setComments([...comments, newComment]);
+        
+        // Add commentId to the selected text
+        const { selection } = editor;
+        if (selection) {
+          Editor.addMark(editor, 'commentId', newComment.id);
+        }
+      }
+      setShowCommentModal(false);
+    } catch (error) {
+      console.error('Failed to save comment:', error);
+    }
+  };
+
+  const handleCommentEdit = (comment: Comment) => {
+    setEditingComment(comment);
+    
+    // Get the selected text based on comment position
+    const textSpans = content.spans || [];
+    let currentPos = 0;
+    let selectedText = '';
+    
+    for (const span of textSpans) {
+      const spanEnd = currentPos + span.text.length;
+      if (comment.position && currentPos <= comment.position.start && spanEnd >= comment.position.end) {
+        const startInSpan = Math.max(0, comment.position.start - currentPos);
+        const endInSpan = Math.min(span.text.length, comment.position.end - currentPos);
+        selectedText = span.text.substring(startInSpan, endInSpan);
+        break;
+      }
+      currentPos = spanEnd;
+    }
+    
+    setSelectedText(selectedText);
+    setSelectedTextPosition(comment.position || { start: 0, end: 0 });
+    setShowCommentModal(true);
+    setShowCommentViewer(false); // Close the viewer when editing
+  };
+
+  const handleCommentDelete = async (commentId: string) => {
+    try {
+      await unifiedDB.deleteComment(commentId);
+      setComments(comments.filter(c => c.id !== commentId));
+      
+      // Remove commentId from text
+      // This would require more complex logic to find and remove the mark
+    } catch (error) {
+      console.error('Failed to delete comment:', error);
+    }
+  };
+
+  const handleCommentResolve = async (commentId: string, resolved: boolean) => {
+    try {
+      const comment = comments.find(c => c.id === commentId);
+      if (comment) {
+        const updatedComment = { ...comment, resolved };
+        await unifiedDB.updateComment(updatedComment);
+        setComments(comments.map(c => c.id === commentId ? updatedComment : c));
+      }
+    } catch (error) {
+      console.error('Failed to update comment:', error);
+    }
+  };
+
+  const handleCommentClick = (commentId: string) => {
+    console.log('Comment clicked:', commentId); // Debug log
+    const comment = comments.find(c => c.id === commentId);
+    console.log('Found comment:', comment); // Debug log
+    
+    if (comment) {
+      const commentsForText = comments.filter(c => 
+        c.position?.start === comment.position?.start && 
+        c.position?.end === comment.position?.end
+      );
+      
+      console.log('Comments for text:', commentsForText); // Debug log
+      
+      // Get the selected text based on comment position
+      const textSpans = content.spans || [];
+      let currentPos = 0;
+      let selectedText = '';
+      
+      for (const span of textSpans) {
+        const spanEnd = currentPos + span.text.length;
+        if (comment.position && currentPos <= comment.position.start && spanEnd >= comment.position.end) {
+          const startInSpan = Math.max(0, comment.position.start - currentPos);
+          const endInSpan = Math.min(span.text.length, comment.position.end - currentPos);
+          selectedText = span.text.substring(startInSpan, endInSpan);
+          break;
+        }
+        currentPos = spanEnd;
+      }
+
+      console.log('Selected text:', selectedText); // Debug log
+      setSelectedText(selectedText);
+      setComments(commentsForText);
+      setShowCommentViewer(true);
+    } else {
+      console.log('Comment not found in comments array:', comments); // Debug log
+    }
+  };
 
   const handleChange = useCallback((value: Descendant[]) => {
     const newContent = convertSlateToRichText(value);
@@ -631,27 +851,88 @@ export default function SlateEditor({
   }, [editor, multiline]);
 
   return (
-    <div className={`border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-900 ${className}`}>
-      <div className="p-3 relative">
-        <Slate 
-          key={editorKey}
-          editor={editor} 
-          initialValue={initialValue}
-          onChange={handleChange}
-        >
-          <FloatingToolbar editor={editor} />
-          <Editable
-            renderElement={Element}
-            renderLeaf={Leaf}
-            placeholder={placeholder}
-            onKeyDown={handleKeyDown}
-            className={`outline-none resize-none w-full text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 ${multiline ? 'min-h-[120px]' : ''}`}
-            style={{
-              lineHeight: '1.5',
-            }}
-          />
-        </Slate>
+    <>
+      <div 
+        className={`border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-900 ${className}`}
+        onClick={(e) => {
+          // Handle clicks on commented text
+          const target = e.target as HTMLElement;
+          const commentId = target.getAttribute('data-comment-id') || 
+                           target.closest('[data-comment-id]')?.getAttribute('data-comment-id');
+          if (commentId) {
+            e.preventDefault();
+            e.stopPropagation();
+            handleCommentClick(commentId);
+          }
+        }}
+      >
+        <div className="p-3 relative">
+          <Slate 
+            key={editorKey}
+            editor={editor} 
+            initialValue={initialValue}
+            onChange={handleChange}
+          >
+            <FloatingToolbar 
+              editor={editor} 
+              blockId={blockId}
+              composableId={composableId}
+              projectSettings={projectSettings}
+              onCommentCreate={handleCommentCreate}
+            />
+            <Editable
+              renderElement={Element}
+              renderLeaf={Leaf}
+              placeholder={placeholder}
+              onKeyDown={handleKeyDown}
+              onMouseDown={(e) => {
+                // Handle clicks on commented text
+                const target = e.target as HTMLElement;
+                const commentId = target.getAttribute('data-comment-id') || 
+                                 target.closest('[data-comment-id]')?.getAttribute('data-comment-id');
+                if (commentId) {
+                  // Use setTimeout to allow the click to complete first
+                  setTimeout(() => {
+                    handleCommentClick(commentId);
+                  }, 0);
+                }
+              }}
+              className={`outline-none resize-none w-full text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 ${multiline ? 'min-h-[120px]' : ''}`}
+              style={{
+                lineHeight: '1.5',
+              }}
+            />
+          </Slate>
+        </div>
       </div>
-    </div>
+
+      {/* Comment Modal */}
+      {showCommentModal && blockId && composableId && (
+        <CommentModal
+          isOpen={showCommentModal}
+          onClose={() => setShowCommentModal(false)}
+          onSave={handleCommentSave}
+          selectedText={selectedText}
+          blockId={blockId}
+          composableId={composableId}
+          projectSettings={projectSettings}
+          existingComment={editingComment}
+          textPosition={selectedTextPosition}
+        />
+      )}
+
+      {/* Comment Viewer */}
+      {showCommentViewer && (
+        <CommentViewer
+          comments={comments}
+          isOpen={showCommentViewer}
+          onClose={() => setShowCommentViewer(false)}
+          onEditComment={handleCommentEdit}
+          onDeleteComment={handleCommentDelete}
+          onResolveComment={handleCommentResolve}
+          selectedText={selectedText}
+        />
+      )}
+    </>
   );
 }
