@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { ContentBlock, RichText } from '@/lib/types';
-import BasicTextInput from '@/components/BasicTextInput';
+import SlateEditor from '@/components/SlateEditor';
 import BlockSettingsMenu from '@/components/BlockSettingsMenu';
 
 interface TextBlockContentProps {
@@ -78,14 +78,13 @@ export default function TextBlockContent({
         )}
       </div>
 
-      {/* Text block with border */}
-      <div className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 bg-slate-50 dark:bg-slate-800/50">
-        <BasicTextInput
+      {/* Text block with rich text editor */}
+      <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+        <SlateEditor
           content={textContent}
           onChange={handleTextChange}
           placeholder="Write your longer text content here. This block is perfect for paragraphs, detailed explanations, and extended writing..."
-          className="text-slate-700 dark:text-slate-200 leading-relaxed min-h-[120px]"
-          tag="div"
+          className="bg-slate-50 dark:bg-slate-800/50"
           multiline={true}
         />
       </div>

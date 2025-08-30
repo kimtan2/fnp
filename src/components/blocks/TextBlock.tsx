@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { ContentBlock, RichText } from '@/lib/types';
-import BasicTextInput from '@/components/BasicTextInput';
+import SlateEditor from '@/components/SlateEditor';
 import BlockSettingsMenu from '@/components/BlockSettingsMenu';
 
 interface TextBlockProps {
@@ -80,12 +80,11 @@ export default function TextBlock({
 
       {/* Text content */}
       <div className="flex-1">
-        <BasicTextInput
+        <SlateEditor
           content={text}
           onChange={handleTextChange}
           placeholder="Type something..."
-          className="text-slate-700 dark:text-slate-200 leading-relaxed"
-          tag="p"
+          className="border-none bg-transparent"
           multiline={true}
         />
       </div>

@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { ContentBlock, RichText, BlockType } from '@/lib/types';
-import BasicTextInput from '@/components/BasicTextInput';
+import SlateEditor from '@/components/SlateEditor';
 import AddBlockMenu from '@/components/AddBlockMenu';
 import BlockSettingsMenu from '@/components/BlockSettingsMenu';
 
@@ -122,7 +122,7 @@ export default function CollapsibleListBlock({
     setShowAddMenu({ position: -1, show: false });
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleTitleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       // Auto-expand and add first block when user presses Enter
@@ -188,14 +188,13 @@ export default function CollapsibleListBlock({
           </svg>
         </button>
 
-        <div className="flex-1 min-w-0">
-          <BasicTextInput
+        <div className="flex-1 min-w-0" onKeyDown={handleTitleKeyDown}>
+          <SlateEditor
             content={title}
             onChange={handleTitleChange}
-            onKeyDown={handleKeyDown}
             placeholder="Toggle section"
-            className="text-slate-800 dark:text-slate-200"
-            tag="div"
+            className="border-none bg-transparent"
+            multiline={false}
           />
         </div>
       </div>

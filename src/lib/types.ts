@@ -45,9 +45,11 @@ export interface TextStyle {
   italic?: boolean;
   underline?: boolean;
   strikethrough?: boolean;
+  code?: boolean;
   color?: string;
   backgroundColor?: string;
   fontSize?: number;
+  link?: string; // URL for links
 }
 
 export interface RichTextSpan {
