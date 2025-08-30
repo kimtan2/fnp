@@ -35,8 +35,8 @@ export default function TextBlockContent({
   canMoveDown,
   projectSettings
 }: TextBlockContentProps) {
-  const textContent = block.content.textContent || { spans: [] };
-  const backTextContent = block.content.rückseiteTextContent || { spans: [] };
+  const textContent = block.content.textContent || { spans: [{ text: '', style: undefined }] };
+  const backTextContent = block.content.rückseiteTextContent || { spans: [{ text: '', style: undefined }] };
   const [showSettings, setShowSettings] = useState(false);
   const overlayComment = useOverlayComment(block, onUpdate);
 
@@ -126,13 +126,21 @@ export default function TextBlockContent({
       </div>
 
       {/* Text block with rich text editor */}
-      <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+      <div className={`rounded-lg border-2 border-slate-200 dark:border-slate-600 ${
+        block.content.backgroundColor ? 
+          `bg-${block.content.backgroundColor}-50 dark:bg-${block.content.backgroundColor}-900/20` : 
+          'bg-slate-50 dark:bg-slate-800/50'
+      }`}>
         {!block.hasRückseite || !block.isFlipped ? (
           <SlateEditor
+            key={`front-${block.id}`}
             content={textContent}
             onChange={handleTextChange}
             placeholder="Write your longer text content here. This block is perfect for paragraphs, detailed explanations, and extended writing..."
-            className="bg-slate-50 dark:bg-slate-800/50"
+            className={block.content.backgroundColor ? 
+              `bg-${block.content.backgroundColor}-50 dark:bg-${block.content.backgroundColor}-900/20` : 
+              'bg-slate-50 dark:bg-slate-800/50'
+            }
             multiline={true}
             blockId={block.id}
             composableId={block.composableId}
@@ -140,10 +148,14 @@ export default function TextBlockContent({
           />
         ) : (
           <SlateEditor
+            key={`back-${block.id}`}
             content={backTextContent}
             onChange={handleBackTextChange}
             placeholder="Write back side content here..."
-            className="bg-slate-50 dark:bg-slate-800/50"
+            className={block.content.backgroundColor ? 
+              `bg-${block.content.backgroundColor}-50 dark:bg-${block.content.backgroundColor}-900/20` : 
+              'bg-slate-50 dark:bg-slate-800/50'
+            }
             multiline={true}
             blockId={block.id}
             composableId={block.composableId}

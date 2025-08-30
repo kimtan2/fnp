@@ -874,7 +874,7 @@ export default function SlateEditor({
   return (
     <>
       <div 
-        className={`border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-900 ${className}`}
+        className={`border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden ${className || 'bg-white dark:bg-slate-900'}`}
         onClick={(e) => {
           // Handle clicks on commented text
           const target = e.target as HTMLElement;
