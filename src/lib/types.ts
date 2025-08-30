@@ -111,6 +111,7 @@ export interface ContentBlock {
     
     // Styling
     backgroundColor?: string;
+    fixedHeight?: number; // Height in pixels
   };
   createdAt: Date;
   updatedAt: Date;

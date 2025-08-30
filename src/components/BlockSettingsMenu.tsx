@@ -30,6 +30,8 @@ const BLOCK_COLORS = [
 export default function BlockSettingsMenu({ block, onDelete, onUpdate, onClose, onMoveUp, onMoveDown, canMoveUp, canMoveDown, onAddOverlayComment }: BlockSettingsMenuProps) {
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [showHeightInput, setShowHeightInput] = useState(false);
+  const [heightValue, setHeightValue] = useState(block.content.fixedHeight?.toString() || '');
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -66,6 +68,20 @@ export default function BlockSettingsMenu({ block, onDelete, onUpdate, onClose, 
     };
     onUpdate(updatedBlock);
     setShowColorPicker(false);
+    onClose();
+  };
+
+  const handleHeightChange = () => {
+    const height = heightValue ? parseInt(heightValue) : undefined;
+    const updatedBlock = {
+      ...block,
+      content: {
+        ...block.content,
+        fixedHeight: height
+      }
+    };
+    onUpdate(updatedBlock);
+    setShowHeightInput(false);
     onClose();
   };
 
@@ -238,6 +254,59 @@ export default function BlockSettingsMenu({ block, onDelete, onUpdate, onClose, 
                 )}
               </button>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Fixed Height option - only for text-block type */}
+      {block.type === 'text-block' && (
+        <button
+          onClick={() => setShowHeightInput(!showHeightInput)}
+          className="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center space-x-2 text-slate-700 dark:text-slate-300"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+          </svg>
+          <span>Set Height</span>
+          <svg className={`w-4 h-4 ml-auto transition-transform ${showHeightInput ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      )}
+
+      {/* Height input */}
+      {showHeightInput && block.type === 'text-block' && (
+        <div className="px-3 pb-2">
+          <div className="mt-2 space-y-2">
+            <label className="text-xs text-slate-600 dark:text-slate-400">Height (pixels):</label>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                value={heightValue}
+                onChange={(e) => setHeightValue(e.target.value)}
+                placeholder="Auto"
+                min="100"
+                max="1000"
+                className="flex-1 px-2 py-1 text-sm border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <button
+                onClick={handleHeightChange}
+                className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+              >
+                Set
+              </button>
+            </div>
+            {block.content.fixedHeight && (
+              <button
+                onClick={() => {
+                  setHeightValue('');
+                  handleHeightChange();
+                }}
+                className="text-xs text-red-600 dark:text-red-400 hover:underline"
+              >
+                Remove fixed height
+              </button>
+            )}
           </div>
         </div>
       )}

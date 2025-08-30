@@ -130,17 +130,18 @@ export default function TextBlockContent({
         block.content.backgroundColor ? 
           `bg-${block.content.backgroundColor}-50 dark:bg-${block.content.backgroundColor}-900/20` : 
           'bg-slate-50 dark:bg-slate-800/50'
-      }`}>
+      } ${block.content.fixedHeight ? 'overflow-y-auto' : ''}`}
+      style={block.content.fixedHeight ? { height: `${block.content.fixedHeight}px` } : undefined}>
         {!block.hasRückseite || !block.isFlipped ? (
           <SlateEditor
             key={`front-${block.id}`}
             content={textContent}
             onChange={handleTextChange}
             placeholder="Write your longer text content here. This block is perfect for paragraphs, detailed explanations, and extended writing..."
-            className={block.content.backgroundColor ? 
+            className={`${block.content.backgroundColor ? 
               `bg-${block.content.backgroundColor}-50 dark:bg-${block.content.backgroundColor}-900/20` : 
               'bg-slate-50 dark:bg-slate-800/50'
-            }
+            } ${block.content.fixedHeight ? 'h-full border-0 rounded-lg' : ''}`}
             multiline={true}
             blockId={block.id}
             composableId={block.composableId}
@@ -152,10 +153,10 @@ export default function TextBlockContent({
             content={backTextContent}
             onChange={handleBackTextChange}
             placeholder="Write back side content here..."
-            className={block.content.backgroundColor ? 
+            className={`${block.content.backgroundColor ? 
               `bg-${block.content.backgroundColor}-50 dark:bg-${block.content.backgroundColor}-900/20` : 
               'bg-slate-50 dark:bg-slate-800/50'
-            }
+            } ${block.content.fixedHeight ? 'h-full border-0 rounded-lg' : ''}`}
             multiline={true}
             blockId={block.id}
             composableId={block.composableId}
