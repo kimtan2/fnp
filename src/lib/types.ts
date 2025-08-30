@@ -114,6 +114,8 @@ export interface Comment {
   content: string;
   position?: { start: number; end: number };
   resolved: boolean;
+  color?: string;
+  showIndicator?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -66,7 +66,7 @@ const Element = ({ attributes, children }: RenderElementProps) => {
   return <p {...attributes}>{children}</p>;
 };
 
-const Leaf = ({ attributes, children, leaf }: RenderLeafProps) => {
+const Leaf = ({ attributes, children, leaf, comments }: RenderLeafProps & { comments?: Comment[] }) => {
   const style: React.CSSProperties = {};
   
   if (leaf.bold) {
@@ -102,16 +102,25 @@ const Leaf = ({ attributes, children, leaf }: RenderLeafProps) => {
   }
 
   if (leaf.link) {
+    let linkClassName = 'text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300 cursor-pointer';
+    const linkStyle = { ...style };
+    
+    if (leaf.commentId) {
+      const comment = comments?.find((c: Comment) => c.id === leaf.commentId);
+      const commentColor = comment?.color || '#FEF08A';
+      linkClassName += ' border-b-2';
+      linkStyle.backgroundColor = `${commentColor}40`;
+      linkStyle.borderBottomColor = commentColor;
+    }
+    
     return (
       <a 
         {...attributes}
         href={leaf.link}
         target="_blank"
         rel="noopener noreferrer"
-        className={`text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300 cursor-pointer ${
-          leaf.commentId ? 'bg-yellow-100 dark:bg-yellow-900/30 border-b-2 border-yellow-400 dark:border-yellow-600' : ''
-        }`}
-        style={style}
+        className={linkClassName}
+        style={linkStyle}
         data-comment-id={leaf.commentId}
       >
         {children}
@@ -120,11 +129,25 @@ const Leaf = ({ attributes, children, leaf }: RenderLeafProps) => {
   }
 
   if (leaf.commentId) {
+    const comment = comments?.find((c: Comment) => c.id === leaf.commentId);
+    const commentColor = comment?.color || '#FEF08A';
+    
+    // Debug logging
+    if (comment) {
+      console.log('Rendering comment with color:', commentColor, 'for comment:', comment);
+    } else {
+      console.log('Comment not found for ID:', leaf.commentId, 'available comments:', comments?.length);
+    }
+    
     return (
       <span 
         {...attributes} 
-        className="bg-yellow-100 dark:bg-yellow-900/30 border-b-2 border-yellow-400 dark:border-yellow-600 cursor-pointer hover:bg-yellow-200 dark:hover:bg-yellow-900/50"
-        style={style}
+        className="cursor-pointer border-b-2 transition-colors"
+        style={{
+          ...style,
+          backgroundColor: `${commentColor}40`,
+          borderBottomColor: commentColor
+        }}
         data-comment-id={leaf.commentId}
         title="Click to view comment"
       >
@@ -652,14 +675,17 @@ export default function SlateEditor({
 
   const handleCommentSave = async (commentData: Omit<Comment, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
+      console.log('Saving comment with data:', commentData); // Debug log
       if (editingComment) {
         // Update existing comment
         const updatedComment = { ...editingComment, ...commentData };
+        console.log('Updating comment:', updatedComment); // Debug log
         await unifiedDB.updateComment(updatedComment);
         setComments(comments.map(c => c.id === editingComment.id ? updatedComment : c));
       } else {
         // Create new comment
         const newComment = await unifiedDB.addComment(commentData);
+        console.log('Created new comment:', newComment); // Debug log
         setComments([...comments, newComment]);
         
         // Add commentId to the selected text
@@ -726,6 +752,7 @@ export default function SlateEditor({
 
   const handleCommentClick = (commentId: string) => {
     console.log('Comment clicked:', commentId); // Debug log
+    console.log('Available comments:', comments); // Debug log
     const comment = comments.find(c => c.id === commentId);
     console.log('Found comment:', comment); // Debug log
     
@@ -880,28 +907,42 @@ export default function SlateEditor({
               projectSettings={projectSettings}
               onCommentCreate={handleCommentCreate}
             />
-            <Editable
-              renderElement={Element}
-              renderLeaf={Leaf}
-              placeholder={placeholder}
-              onKeyDown={handleKeyDown}
-              onMouseDown={(e) => {
-                // Handle clicks on commented text
-                const target = e.target as HTMLElement;
-                const commentId = target.getAttribute('data-comment-id') || 
-                                 target.closest('[data-comment-id]')?.getAttribute('data-comment-id');
-                if (commentId) {
-                  // Use setTimeout to allow the click to complete first
-                  setTimeout(() => {
-                    handleCommentClick(commentId);
-                  }, 0);
-                }
-              }}
-              className={`outline-none resize-none w-full text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 ${multiline ? 'min-h-[120px]' : ''}`}
-              style={{
-                lineHeight: '1.5',
-              }}
-            />
+            <div className="relative">
+              <Editable
+                renderElement={Element}
+                renderLeaf={(props) => <Leaf {...props} comments={comments} />}
+                placeholder={placeholder}
+                onKeyDown={handleKeyDown}
+                onMouseDown={(e) => {
+                  // Handle clicks on commented text
+                  const target = e.target as HTMLElement;
+                  const commentId = target.getAttribute('data-comment-id') || 
+                                   target.closest('[data-comment-id]')?.getAttribute('data-comment-id');
+                  if (commentId) {
+                    // Use setTimeout to allow the click to complete first
+                    setTimeout(() => {
+                      handleCommentClick(commentId);
+                    }, 0);
+                  }
+                }}
+                className={`outline-none resize-none w-full text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 ${multiline ? 'min-h-[120px]' : ''}`}
+                style={{
+                  lineHeight: '1.5',
+                }}
+              />
+              
+              {/* Comment indicators on the right */}
+              <div className="absolute right-0 top-0 flex flex-col gap-1 pointer-events-none pr-2 pt-1">
+                {comments.filter(comment => comment.showIndicator).map((comment) => (
+                  <div
+                    key={comment.id}
+                    className="w-3 h-3 rounded-full border border-slate-300 dark:border-slate-600"
+                    style={{ backgroundColor: comment.color || '#FEF08A' }}
+                    title={`Comment by ${comment.authorName}: ${comment.content.substring(0, 50)}...`}
+                  />
+                ))}
+              </div>
+            </div>
           </Slate>
         </div>
       </div>

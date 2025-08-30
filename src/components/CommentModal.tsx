@@ -30,6 +30,8 @@ export default function CommentModal({
   const [authorName, setAuthorName] = useState('');
   const [content, setContent] = useState('');
   const [resolved, setResolved] = useState(false);
+  const [color, setColor] = useState('#FEF08A');
+  const [showIndicator, setShowIndicator] = useState(false);
 
   useEffect(() => {
     if (existingComment) {
@@ -37,11 +39,15 @@ export default function CommentModal({
       setAuthorName(existingComment.authorName);
       setContent(existingComment.content);
       setResolved(existingComment.resolved);
+      setColor(existingComment.color || '#FEF08A');
+      setShowIndicator(existingComment.showIndicator || false);
     } else {
       setAuthorType(projectSettings?.commentatorTypes[0] || '');
       setAuthorName('Anonymous'); // Default name
       setContent('');
       setResolved(false);
+      setColor('#FEF08A');
+      setShowIndicator(false);
     }
   }, [existingComment, projectSettings, isOpen]);
 
@@ -55,7 +61,9 @@ export default function CommentModal({
       authorName: authorName.trim() || 'Anonymous',
       content: content.trim(),
       position: textPosition,
-      resolved
+      resolved,
+      color,
+      showIndicator
     });
 
     handleClose();
@@ -66,6 +74,8 @@ export default function CommentModal({
     setAuthorName('');
     setContent('');
     setResolved(false);
+    setColor('#FEF08A');
+    setShowIndicator(false);
     onClose();
   };
 
@@ -125,6 +135,48 @@ export default function CommentModal({
               rows={4}
               className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             />
+          </div>
+
+          {/* Color picker */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              Color
+            </label>
+            <div className="flex items-center gap-3">
+              <input
+                type="color"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                className="w-12 h-8 rounded border border-slate-300 dark:border-slate-600 cursor-pointer"
+              />
+              <div className="flex gap-2">
+                {['#FEF08A', '#FECACA', '#A7F3D0', '#BFDBFE', '#DDD6FE', '#F9A8D4'].map((presetColor) => (
+                  <button
+                    key={presetColor}
+                    onClick={() => setColor(presetColor)}
+                    className={`w-6 h-6 rounded border-2 ${
+                      color === presetColor ? 'border-slate-900 dark:border-slate-100' : 'border-slate-300 dark:border-slate-600'
+                    }`}
+                    style={{ backgroundColor: presetColor }}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Show indicator checkbox */}
+          <div className="mb-4">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={showIndicator}
+                onChange={(e) => setShowIndicator(e.target.checked)}
+                className="mr-2 rounded border-slate-300 dark:border-slate-600"
+              />
+              <span className="text-sm text-slate-700 dark:text-slate-300">
+                Show the comment presence on the right?
+              </span>
+            </label>
           </div>
 
           {/* Resolved checkbox (only for existing comments) */}
