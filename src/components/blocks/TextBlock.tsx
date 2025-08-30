@@ -48,9 +48,7 @@ export default function TextBlock({
   return (
     <div 
       className={`relative flex items-start py-1 ${isDragging ? 'opacity-50' : ''}`}
-      draggable
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
+    
     >
 
       {/* Settings button */}

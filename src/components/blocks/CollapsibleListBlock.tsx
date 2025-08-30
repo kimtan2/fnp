@@ -140,9 +140,7 @@ export default function CollapsibleListBlock({
   return (
     <div 
       className={`group relative py-1 ${isDragging ? 'opacity-50' : ''}`}
-      draggable
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
+      
     >
 
       {/* Settings button */}

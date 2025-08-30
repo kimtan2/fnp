@@ -73,9 +73,7 @@ export default function DividerBlock({
   return (
     <div 
       className={`group relative py-4 ${isDragging ? 'opacity-50' : ''}`}
-      draggable
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
+     
     >
 
       {/* Style selector and settings */}

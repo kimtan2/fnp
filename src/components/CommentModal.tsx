@@ -43,7 +43,7 @@ export default function CommentModal({
       setShowIndicator(existingComment.showIndicator || false);
     } else {
       setAuthorType(projectSettings?.commentatorTypes[0] || '');
-      setAuthorName('Anonymous'); // Default name
+      setAuthorName(''); // Default name
       setContent('');
       setResolved(false);
       setColor('#FEF08A');
@@ -58,7 +58,7 @@ export default function CommentModal({
       blockId,
       composableId,
       authorType,
-      authorName: authorName.trim() || 'Anonymous',
+      authorName: authorName.trim() || '',
       content: content.trim(),
       position: textPosition,
       resolved,

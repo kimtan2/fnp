@@ -926,11 +926,11 @@ export default function SlateEditor({
               />
               
               {/* Comment indicators on the right */}
-              <div className="absolute right-0 top-0 flex flex-col gap-1 pointer-events-none pr-2 pt-1">
+              <div className="absolute right-0 top-0 flex flex-col gap-2 pointer-events-none pr-2 pt-1">
                 {comments.filter(comment => comment.showIndicator).map((comment) => (
                   <div
                     key={comment.id}
-                    className="w-3 h-3 rounded-full border border-slate-300 dark:border-slate-600"
+                    className="w-6 h-6 rounded-full border-2 border-slate-400 dark:border-slate-500 shadow-md"
                     style={{ backgroundColor: comment.color || '#FEF08A' }}
                     title={`Comment by ${comment.authorName}: ${comment.content.substring(0, 50)}...`}
                   />

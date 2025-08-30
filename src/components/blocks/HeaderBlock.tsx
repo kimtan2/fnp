@@ -82,9 +82,7 @@ export default function HeaderBlock({
   return (
     <div 
       className={`relative flex items-start py-2 ${isDragging ? 'opacity-50' : ''}`}
-      draggable
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
+      
     >
 
       <div className="flex-1 relative">

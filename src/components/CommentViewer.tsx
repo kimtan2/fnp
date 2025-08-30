@@ -110,9 +110,7 @@ export default function CommentViewer({
                       }`}>
                         {comment.authorType}
                       </span>
-                      <span className="font-medium text-slate-900 dark:text-slate-100">
-                        {comment.authorName}
-                      </span>
+                      
                       {comment.resolved && (
                         <span className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-xs font-medium">
                           ✓ Resolved

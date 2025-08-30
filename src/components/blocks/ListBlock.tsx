@@ -151,9 +151,7 @@ export default function ListBlock({
   return (
     <div 
       className={`group relative py-2 ${isDragging ? 'opacity-50' : ''}`}
-      draggable
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
+      
     >
 
       {/* List type selector and settings */}
