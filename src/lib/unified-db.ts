@@ -188,6 +188,24 @@ class UnifiedDB {
     });
   }
 
+  async getAllComposables(): Promise<Composable[]> {
+    const db = await this.openDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(this.composablesStore, 'readonly');
+      const store = transaction.objectStore(this.composablesStore);
+      const request = store.getAll();
+
+      request.onsuccess = () => {
+        const composables = request.result.map((composable: Composable & { createdAt: string | Date }) => ({
+          ...composable,
+          createdAt: new Date(composable.createdAt)
+        }));
+        resolve(composables);
+      };
+      request.onerror = () => reject(request.error);
+    });
+  }
+
   // Settings methods
   async getProjectSettings(projectId: string): Promise<ProjectSettings | null> {
     const db = await this.openDB();
@@ -348,6 +366,25 @@ class UnifiedDB {
     });
   }
 
+  async getAllBlocks(): Promise<ContentBlock[]> {
+    const db = await this.openDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(this.blocksStore, 'readonly');
+      const store = transaction.objectStore(this.blocksStore);
+      const request = store.getAll();
+
+      request.onsuccess = () => {
+        const blocks = request.result.map((block: ContentBlock & { createdAt: string | Date; updatedAt: string | Date }) => ({
+          ...block,
+          createdAt: new Date(block.createdAt),
+          updatedAt: new Date(block.updatedAt)
+        }));
+        resolve(blocks);
+      };
+      request.onerror = () => reject(request.error);
+    });
+  }
+
   // Comments methods
   async getCommentsByBlock(blockId: string): Promise<Comment[]> {
     const db = await this.openDB();
@@ -433,6 +470,44 @@ class UnifiedDB {
       const request = store.delete(id);
 
       request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async getAllComments(): Promise<Comment[]> {
+    const db = await this.openDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(this.commentsStore, 'readonly');
+      const store = transaction.objectStore(this.commentsStore);
+      const request = store.getAll();
+
+      request.onsuccess = () => {
+        const comments = request.result.map((comment: Comment & { createdAt: string | Date; updatedAt: string | Date }) => ({
+          ...comment,
+          createdAt: new Date(comment.createdAt),
+          updatedAt: new Date(comment.updatedAt)
+        }));
+        resolve(comments);
+      };
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async getAllProjectSettings(): Promise<ProjectSettings[]> {
+    const db = await this.openDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(this.settingsStore, 'readonly');
+      const store = transaction.objectStore(this.settingsStore);
+      const request = store.getAll();
+
+      request.onsuccess = () => {
+        const settings = request.result.map((setting: ProjectSettings & { createdAt: string | Date; updatedAt: string | Date }) => ({
+          ...setting,
+          createdAt: new Date(setting.createdAt),
+          updatedAt: new Date(setting.updatedAt)
+        }));
+        resolve(settings);
+      };
       request.onerror = () => reject(request.error);
     });
   }
