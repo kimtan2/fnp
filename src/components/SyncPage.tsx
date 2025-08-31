@@ -205,10 +205,43 @@ export default function SyncPage({ isOpen, onClose }: SyncPageProps) {
               Restore data from a previous backup stored in your Google Drive.
             </p>
             
+            {!isAuthenticated && (
+              <button 
+                onClick={async () => {
+                  try {
+                    await googleDriveService.initializeGIS();
+                    const success = await googleDriveService.signIn();
+                    if (success) {
+                      setIsAuthenticated(true);
+                      await loadBackupFiles();
+                    } else {
+                      setMessage('Failed to authenticate with Google Drive');
+                    }
+                  } catch (error) {
+                    console.error('Connect failed:', error);
+                    setMessage('Failed to connect to Google Drive');
+                  }
+                }}
+                className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 mb-4"
+              >
+                Connect to Google Drive
+              </button>
+            )}
+            
             <div className="bg-slate-50 dark:bg-slate-700 rounded-lg p-4">
-              <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
-                Available backups:
-              </p>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  Available backups:
+                </p>
+                {isAuthenticated && (
+                  <button
+                    onClick={loadBackupFiles}
+                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                  >
+                    Refresh
+                  </button>
+                )}
+              </div>
               {isAuthenticated && backupFiles.length > 0 ? (
                 <div className="space-y-2">
                   {backupFiles.map((file) => (
@@ -236,7 +269,7 @@ export default function SyncPage({ isOpen, onClose }: SyncPageProps) {
                 </div>
               ) : (
                 <div className="text-sm text-slate-500 dark:text-slate-400">
-                  {isAuthenticated ? 'No backups found.' : 'Connect to Google Drive first.'}
+                  {isAuthenticated ? 'No backups found.' : 'Connect to Google Drive to see available backups.'}
                 </div>
               )}
             </div>
