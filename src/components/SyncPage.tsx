@@ -41,7 +41,7 @@ export default function SyncPage({ isOpen, onClose }: SyncPageProps) {
     
     try {
       if (!googleDriveService.isAuthenticated()) {
-        await googleDriveService.initializeGapi();
+        await googleDriveService.initializeGIS();
         const success = await googleDriveService.signIn();
         if (!success) {
           setMessage('Failed to authenticate with Google Drive');

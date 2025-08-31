@@ -5,51 +5,50 @@ export interface GoogleDriveFile {
   size: string;
 }
 
+interface TokenResponse {
+  access_token: string;
+  expires_in: number;
+  scope: string;
+  token_type: string;
+}
+
 class GoogleDriveService {
   private isSignedIn = false;
   private accessToken: string | null = null;
+  private tokenClient: any = null;
 
-  async initializeGapi(): Promise<void> {
+  async initializeGIS(): Promise<void> {
     return new Promise((resolve, reject) => {
       if (typeof window === 'undefined') {
-        reject(new Error('gapi can only be loaded in browser environment'));
+        reject(new Error('GIS can only be loaded in browser environment'));
         return;
       }
 
-      if (window.gapi) {
-        window.gapi.load('auth2', () => {
-          window.gapi.auth2.init({
-            client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''
-          }).then(() => {
-            const authInstance = window.gapi.auth2.getAuthInstance();
-            this.isSignedIn = authInstance.isSignedIn.get();
-            if (this.isSignedIn) {
-              this.accessToken = authInstance.currentUser.get().getAuthResponse().access_token;
-            }
-            resolve();
-          }).catch(reject);
-        });
+      if (window.google?.accounts?.oauth2) {
+        this.initializeTokenClient();
+        resolve();
         return;
       }
 
       const script = document.createElement('script');
-      script.src = 'https://apis.google.com/js/api.js';
+      script.src = 'https://accounts.google.com/gsi/client';
       script.onload = () => {
-        window.gapi.load('auth2', () => {
-          window.gapi.auth2.init({
-            client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''
-          }).then(() => {
-            const authInstance = window.gapi.auth2.getAuthInstance();
-            this.isSignedIn = authInstance.isSignedIn.get();
-            if (this.isSignedIn) {
-              this.accessToken = authInstance.currentUser.get().getAuthResponse().access_token;
-            }
-            resolve();
-          }).catch(reject);
-        });
+        this.initializeTokenClient();
+        resolve();
       };
-      script.onerror = reject;
+      script.onerror = () => reject(new Error('Failed to load Google Identity Services'));
       document.head.appendChild(script);
+    });
+  }
+
+  private initializeTokenClient(): void {
+    this.tokenClient = window.google.accounts.oauth2.initTokenClient({
+      client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '',
+      scope: 'https://www.googleapis.com/auth/drive.file',
+      callback: (tokenResponse: TokenResponse) => {
+        this.accessToken = tokenResponse.access_token;
+        this.isSignedIn = true;
+      },
     });
   }
 
@@ -59,18 +58,21 @@ class GoogleDriveService {
         throw new Error('Sign-in can only be performed in browser environment');
       }
 
-      if (!window.gapi?.auth2) {
-        await this.initializeGapi();
+      if (!this.tokenClient) {
+        await this.initializeGIS();
       }
 
-      const authInstance = window.gapi.auth2.getAuthInstance();
-      const user = await authInstance.signIn({
-        scope: 'https://www.googleapis.com/auth/drive.file'
-      });
+      return new Promise((resolve) => {
+        const originalCallback = this.tokenClient.callback;
+        this.tokenClient.callback = (tokenResponse: TokenResponse) => {
+          this.accessToken = tokenResponse.access_token;
+          this.isSignedIn = true;
+          originalCallback(tokenResponse);
+          resolve(true);
+        };
 
-      this.isSignedIn = true;
-      this.accessToken = user.getAuthResponse().access_token;
-      return true;
+        this.tokenClient.requestAccessToken();
+      });
     } catch (error) {
       console.error('Sign-in failed:', error);
       return false;
@@ -78,9 +80,8 @@ class GoogleDriveService {
   }
 
   async signOut(): Promise<void> {
-    if (window.gapi?.auth2) {
-      const authInstance = window.gapi.auth2.getAuthInstance();
-      await authInstance.signOut();
+    if (this.accessToken && window.google?.accounts?.oauth2) {
+      window.google.accounts.oauth2.revoke(this.accessToken);
       this.isSignedIn = false;
       this.accessToken = null;
     }
@@ -174,52 +175,20 @@ export const googleDriveService = new GoogleDriveService();
 
 declare global {
   interface Window {
-    gapi: {
-      load: (api: string, callback: () => void) => void;
-      auth2: {
-        init: (config: { client_id: string }) => Promise<{
-          isSignedIn: { get: () => boolean };
-          currentUser: { get: () => { getAuthResponse: () => { access_token: string } } };
-          signIn: (config: { scope: string }) => Promise<{ getAuthResponse: () => { access_token: string } }>;
-          signOut: () => Promise<void>;
-          getAuthInstance: () => {
-            isSignedIn: { get: () => boolean };
-            currentUser: { get: () => { getAuthResponse: () => { access_token: string } } };
-            signIn: (config: { scope: string }) => Promise<{ getAuthResponse: () => { access_token: string } }>;
-            signOut: () => Promise<void>;
+    google?: {
+      accounts?: {
+        oauth2?: {
+          initTokenClient: (config: {
+            client_id: string;
+            scope: string;
+            callback: (tokenResponse: TokenResponse) => void;
+          }) => {
+            callback: (tokenResponse: TokenResponse) => void;
+            requestAccessToken: () => void;
           };
-        }>;
-        getAuthInstance: () => {
-          isSignedIn: { get: () => boolean };
-          currentUser: { get: () => { getAuthResponse: () => { access_token: string } } };
-          signIn: (config: { scope: string }) => Promise<{ getAuthResponse: () => { access_token: string } }>;
-          signOut: () => Promise<void>;
+          revoke: (accessToken: string) => void;
         };
       };
     };
   }
-
-  const gapi: {
-    load: (api: string, callback: () => void) => void;
-    auth2: {
-      init: (config: { client_id: string }) => Promise<{
-        isSignedIn: { get: () => boolean };
-        currentUser: { get: () => { getAuthResponse: () => { access_token: string } } };
-        signIn: (config: { scope: string }) => Promise<{ getAuthResponse: () => { access_token: string } }>;
-        signOut: () => Promise<void>;
-        getAuthInstance: () => {
-          isSignedIn: { get: () => boolean };
-          currentUser: { get: () => { getAuthResponse: () => { access_token: string } } };
-          signIn: (config: { scope: string }) => Promise<{ getAuthResponse: () => { access_token: string } }>;
-          signOut: () => Promise<void>;
-        };
-      }>;
-      getAuthInstance: () => {
-        isSignedIn: { get: () => boolean };
-        currentUser: { get: () => { getAuthResponse: () => { access_token: string } } };
-        signIn: (config: { scope: string }) => Promise<{ getAuthResponse: () => { access_token: string } }>;
-        signOut: () => Promise<void>;
-      };
-    };
-  };
 }
