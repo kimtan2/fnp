@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useMemo, useState, useEffect, useRef } from 'react';
-import { createEditor, Descendant, Editor, Element as SlateElement, Transforms, Text, Range } from 'slate';
+import { createEditor, Descendant, Editor, Element as SlateElement, Transforms, Text, Range, BaseEditor } from 'slate';
 import { Slate, Editable, withReact, RenderElementProps, RenderLeafProps, ReactEditor } from 'slate-react';
 import { withHistory } from 'slate-history';
 import { RichText, TextStyle, Comment, ProjectSettings } from '@/lib/types';
@@ -39,7 +39,7 @@ interface CustomText {
 
 declare module 'slate' {
   interface CustomTypes {
-    Editor: Editor;
+    Editor: BaseEditor & ReactEditor;
     Element: CustomElement;
     Text: CustomText;
   }
@@ -236,7 +236,7 @@ const FloatingToolbar = ({
     return !!marks?.link;
   };
 
-  const toggleFormat = (format: keyof CustomText) => {
+  const toggleFormat = (format: keyof Omit<CustomText, 'text'>) => {
     const isActive = Editor.marks(editor)?.[format] === true;
     if (isActive) {
       Editor.removeMark(editor, format);
@@ -950,7 +950,7 @@ export default function SlateEditor({
           selectedText={selectedText}
           blockId={blockId}
           composableId={composableId}
-          projectSettings={projectSettings}
+          projectSettings={projectSettings ?? null}
           existingComment={editingComment}
           textPosition={selectedTextPosition}
         />

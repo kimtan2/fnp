@@ -24,14 +24,14 @@ export default function AddComposableModal({
 }: AddComposableModalProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState('No Status');
   const [selectedColor, setSelectedColor] = useState(colors[0]);
 
-  const statusOptions = settings?.statusTypes || ['Todo', 'In Progress', 'Done'];
+  const statusOptions = settings?.statusTypes || ['No Status', 'Todo', 'In Progress', 'Done'];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (title.trim() && description.trim() && status) {
+    if (title.trim() && status) {
       onAddComposable({
         title: title.trim(),
         description: description.trim(),
@@ -46,7 +46,7 @@ export default function AddComposableModal({
   const handleClose = () => {
     setTitle('');
     setDescription('');
-    setStatus(statusOptions[0] || '');
+    setStatus(statusOptions[0] || 'No Status');
     setSelectedColor(colors[0]);
     onClose();
   };
@@ -158,7 +158,7 @@ export default function AddComposableModal({
               </button>
               <button
                 type="submit"
-                disabled={!title.trim() || !description.trim() || !status}
+                disabled={!title.trim() || !status}
                 className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 dark:disabled:bg-blue-800 text-white rounded-lg transition-colors disabled:cursor-not-allowed"
               >
                 Add Composable

@@ -23,6 +23,31 @@ export default function ComposableDetailPage() {
     loadComposableData();
   }, [projectId, composableId]);
 
+  // Scroll to specific block if hash is present in URL
+  useEffect(() => {
+    if (blocks.length > 0) {
+      const hash = window.location.hash;
+      if (hash) {
+        const elementId = hash.substring(1); // Remove the # from hash
+        setTimeout(() => {
+          const element = document.getElementById(elementId);
+          if (element) {
+            element.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center'
+            });
+            // Highlight the element briefly
+            element.style.backgroundColor = '#3B82F6';
+            element.style.transition = 'background-color 0.3s ease';
+            setTimeout(() => {
+              element.style.backgroundColor = '';
+            }, 2000);
+          }
+        }, 500); // Delay to ensure DOM is fully rendered
+      }
+    }
+  }, [blocks]);
+
   const loadComposableData = async () => {
     try {
       setLoading(true);

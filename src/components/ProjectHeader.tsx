@@ -3,10 +3,11 @@ import { Project } from '@/lib/types';
 interface ProjectHeaderProps {
   project: Project;
   onSettingsClick: () => void;
+  onHistoryClick: () => void;
   onBack: () => void;
 }
 
-export default function ProjectHeader({ project, onSettingsClick, onBack }: ProjectHeaderProps) {
+export default function ProjectHeader({ project, onSettingsClick, onHistoryClick, onBack }: ProjectHeaderProps) {
   return (
     <header className="bg-white dark:bg-slate-800 shadow-sm border-b border-slate-200 dark:border-slate-700">
       <div className="px-6 py-4">
@@ -61,11 +62,27 @@ export default function ProjectHeader({ project, onSettingsClick, onBack }: Proj
             </div>
           </div>
           
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2 text-sm text-slate-600 dark:text-slate-300">
-              
-            </div>
-            
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={onHistoryClick}
+              className="p-2 text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+              title="History"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            </button>
+
             <button
               onClick={onSettingsClick}
               className="p-2 text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"

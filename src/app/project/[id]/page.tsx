@@ -8,6 +8,7 @@ import ProjectHeader from '@/components/ProjectHeader';
 import ComposableCard from '@/components/ComposableCard';
 import AddComposableModal from '@/components/AddComposableModal';
 import ProjectSettingsModal from '@/components/ProjectSettingsModal';
+import HistoryPage from '@/components/HistoryPage';
 
 export default function ProjectPage() {
   const params = useParams();
@@ -19,6 +20,7 @@ export default function ProjectPage() {
   const [settings, setSettings] = useState<ProjectSettings | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -107,6 +109,7 @@ export default function ProjectPage() {
       <ProjectHeader
         project={project}
         onSettingsClick={() => setIsSettingsModalOpen(true)}
+        onHistoryClick={() => setIsHistoryModalOpen(true)}
         onBack={() => router.push('/')}
       />
       
@@ -157,6 +160,12 @@ export default function ProjectPage() {
         onClose={() => setIsSettingsModalOpen(false)}
         settings={settings}
         onUpdateSettings={handleUpdateSettings}
+      />
+
+      <HistoryPage
+        isOpen={isHistoryModalOpen}
+        onClose={() => setIsHistoryModalOpen(false)}
+        projectId={projectId}
       />
     </div>
   );

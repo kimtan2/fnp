@@ -17,7 +17,7 @@ interface TokenResponse {
 class GoogleDriveService {
   private isSignedIn = false;
   private accessToken: string | null = null;
-  private tokenClient: any = null;
+  private tokenClient: { callback: (tokenResponse: TokenResponse) => void; requestAccessToken: () => void; } | null | undefined = null;
 
   async initializeGIS(): Promise<void> {
     return new Promise((resolve, reject) => {
@@ -57,7 +57,7 @@ class GoogleDriveService {
         this.isSignedIn = true;
         console.log('Successfully authenticated with Google Drive');
       },
-      error_callback: (error: any) => {
+      error_callback: (error: Error) => {
         console.error('Auth error:', error);
         this.isSignedIn = false;
         this.accessToken = null;
@@ -76,6 +76,10 @@ class GoogleDriveService {
       }
 
       return new Promise((resolve, reject) => {
+        if (!this.tokenClient) {
+          reject(new Error('Token client not initialized'));
+          return;
+        }
         const originalCallback = this.tokenClient.callback;
         this.tokenClient.callback = (tokenResponse: TokenResponse) => {
           if (tokenResponse.error) {
@@ -103,7 +107,11 @@ class GoogleDriveService {
           });
         };
 
-        this.tokenClient.requestAccessToken();
+        if (this.tokenClient) {
+          this.tokenClient.requestAccessToken();
+        } else {
+          reject(new Error('Token client not initialized'));
+        }
       });
     } catch (error) {
       console.error('Sign-in failed:', error);
@@ -344,7 +352,7 @@ class GoogleDriveService {
   }
 
   // ADDED: Debug method to check what files exist
-  async debugListAllFiles(): Promise<any[]> {
+  async debugListAllFiles(): Promise<unknown[]> {
     if (!this.isAuthenticated()) {
       throw new Error('Not authenticated with Google Drive');
     }
@@ -385,7 +393,7 @@ declare global {
             client_id: string;
             scope: string;
             callback: (tokenResponse: TokenResponse) => void;
-            error_callback?: (error: any) => void;
+            error_callback?: (error: Error) => void;
           }) => {
             callback: (tokenResponse: TokenResponse) => void;
             requestAccessToken: () => void;

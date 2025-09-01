@@ -11,6 +11,19 @@ import TextBlockContent from '@/components/blocks/TextBlockContent';
 import MarkdownBlock from '@/components/blocks/MarkdownBlock';
 import AddBlockMenu from '@/components/AddBlockMenu';
 
+interface NestedBlockHandlers {
+  onAddNestedBlock: (parentBlockId: string, type: BlockType, position?: number) => void;
+  onUpdateNestedBlock: (nestedBlock: ContentBlock) => void;
+  onDeleteNestedBlock: (nestedBlockId: string) => void;
+  onReorderNestedBlocks: (parentBlockId: string, newOrder: string[]) => void;
+  renderNestedBlock: (block: ContentBlock, index: number, moveProps?: {
+    onMoveUp: () => void;
+    onMoveDown: () => void;
+    canMoveUp: boolean;
+    canMoveDown: boolean;
+  }) => React.JSX.Element | null;
+}
+
 interface BlockEditorProps {
   blocks: ContentBlock[];
   onAddBlock: (type: BlockType, position?: number) => void;
@@ -363,7 +376,8 @@ export default function BlockEditor({
         // Add nested block handlers for collapsible list
         if (isNested && parentBlockId) {
           // For nested collapsible blocks, create specialized handlers that work within the parent
-          (blockProps as any).onAddNestedBlock = (nestedParentBlockId: string, type: BlockType, position?: number) => {
+          const nestedHandlers: Partial<NestedBlockHandlers> = {};
+          nestedHandlers.onAddNestedBlock = (nestedParentBlockId: string, type: BlockType, position?: number): void => {
             // Find the top-level parent that contains this nested block
             const topLevelParent = blocks.find(b => 
               b.content.nestedBlocks?.some(nb => nb.id === block.id)
@@ -422,30 +436,26 @@ export default function BlockEditor({
             onUpdateBlock(updatedParent);
           };
           
-          (blockProps as any).onUpdateNestedBlock = handleUpdateNestedBlock;
-          (blockProps as any).onDeleteNestedBlock = handleDeleteNestedBlock;
-          (blockProps as any).onReorderNestedBlocks = handleReorderNestedBlocks;
+          nestedHandlers.onUpdateNestedBlock = handleUpdateNestedBlock;
+          nestedHandlers.onDeleteNestedBlock = handleDeleteNestedBlock;
+          nestedHandlers.onReorderNestedBlocks = handleReorderNestedBlocks;
+          Object.assign(blockProps, nestedHandlers);
         } else {
           // For top-level collapsible blocks, use the regular handlers
-          (blockProps as any).onAddNestedBlock = handleAddNestedBlock;
-          (blockProps as any).onUpdateNestedBlock = handleUpdateNestedBlock;
-          (blockProps as any).onDeleteNestedBlock = handleDeleteNestedBlock;
-          (blockProps as any).onReorderNestedBlocks = handleReorderNestedBlocks;
+          const topLevelHandlers: Partial<NestedBlockHandlers> = {
+            onAddNestedBlock: handleAddNestedBlock,
+            onUpdateNestedBlock: handleUpdateNestedBlock,
+            onDeleteNestedBlock: handleDeleteNestedBlock,
+            onReorderNestedBlocks: handleReorderNestedBlocks
+          };
+          Object.assign(blockProps, topLevelHandlers);
         }
-        (blockProps as any).renderNestedBlock = (nestedBlock: ContentBlock, nestedIndex: number, moveProps?: {
+        const renderNestedBlock = (nestedBlock: ContentBlock, _nestedIndex: number, moveProps?: {
           onMoveUp: () => void;
           onMoveDown: () => void;
           canMoveUp: boolean;
           canMoveDown: boolean;
-        }) => {
-          // For nested blocks, we pass the move props if provided
-          const nestedBlockProps = {
-            ...renderBlock(nestedBlock, nestedIndex, true, block.id)?.props,
-            onMoveUp: moveProps?.onMoveUp,
-            onMoveDown: moveProps?.onMoveDown,
-            canMoveUp: moveProps?.canMoveUp,
-            canMoveDown: moveProps?.canMoveDown
-          };
+        }): React.JSX.Element | null => {
           
           // We need to render the block component directly since renderBlock returns JSX
           let NestedBlockComponent;
@@ -490,11 +500,12 @@ export default function BlockEditor({
           
           // Add additional props for collapsible blocks
           if (nestedBlock.type === 'collapsible-list') {
-            (baseProps as any).onAddNestedBlock = handleAddNestedBlock;
-            (baseProps as any).onUpdateNestedBlock = handleUpdateNestedBlock;
-            (baseProps as any).onDeleteNestedBlock = handleDeleteNestedBlock;
-            (baseProps as any).onReorderNestedBlocks = handleReorderNestedBlocks;
-            (baseProps as any).renderNestedBlock = (deepNestedBlock: ContentBlock, deepNestedIndex: number) => renderBlock(deepNestedBlock, deepNestedIndex, true, nestedBlock.id);
+            const collapsibleProps = baseProps as typeof baseProps & NestedBlockHandlers;
+            collapsibleProps.onAddNestedBlock = handleAddNestedBlock;
+            collapsibleProps.onUpdateNestedBlock = handleUpdateNestedBlock;
+            collapsibleProps.onDeleteNestedBlock = handleDeleteNestedBlock;
+            collapsibleProps.onReorderNestedBlocks = handleReorderNestedBlocks;
+            collapsibleProps.renderNestedBlock = (deepNestedBlock: ContentBlock, deepNestedIndex: number) => renderBlock(deepNestedBlock, deepNestedIndex, true, nestedBlock.id) || <div />;
           }
           
           return (
@@ -503,6 +514,7 @@ export default function BlockEditor({
             </div>
           );
         };
+        (blockProps as typeof blockProps & { renderNestedBlock: typeof renderNestedBlock }).renderNestedBlock = renderNestedBlock;
         break;
       case 'text-block':
         BlockComponent = TextBlockContent;
@@ -524,7 +536,7 @@ export default function BlockEditor({
     }
 
     return (
-      <div key={block.id} className="relative">
+      <div key={block.id} id={`block-${block.id}`} className="relative">
         {/* Hover area above block for plus icon */}
         <div 
           className="group/spacer absolute -top-3 left-0 right-0 h-6 flex items-center z-10"
