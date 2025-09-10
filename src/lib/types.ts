@@ -35,6 +35,7 @@ export type BlockType =
   | 'list' 
   | 'divider' 
   | 'collapsible-list' 
+  | 'collapsible-list-array'
   | 'text-block'
   | 'markdown';
 
@@ -100,6 +101,15 @@ export interface ContentBlock {
     title?: RichText;
     isExpanded?: boolean;
     nestedBlocks?: ContentBlock[]; // Changed from items to nested blocks
+    
+    // Collapsible list array block (multiple tabs)
+    tabs?: Array<{
+      id: string;
+      title: RichText;
+      isExpanded: boolean;
+      nestedBlocks: ContentBlock[];
+      color?: string;
+    }>;
     
     // Text block (longer content)
     textContent?: RichText;

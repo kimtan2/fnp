@@ -7,6 +7,7 @@ import TextBlock from '@/components/blocks/TextBlock';
 import ListBlock from '@/components/blocks/ListBlock';
 import DividerBlock from '@/components/blocks/DividerBlock';
 import CollapsibleListBlock from '@/components/blocks/CollapsibleListBlock';
+import CollapsibleListArrayBlock from '@/components/blocks/CollapsibleListArrayBlock';
 import TextBlockContent from '@/components/blocks/TextBlockContent';
 import MarkdownBlock from '@/components/blocks/MarkdownBlock';
 import AddBlockMenu from '@/components/AddBlockMenu';
@@ -289,6 +290,18 @@ export default function BlockEditor({
           isExpanded: false,
           nestedBlocks: []
         };
+      case 'collapsible-list-array':
+        return {
+          tabs: [
+            {
+              id: crypto.randomUUID(),
+              title: { spans: [{ text: 'Tab 1' }] },
+              isExpanded: true,
+              nestedBlocks: [],
+              color: '#3B82F6'
+            }
+          ]
+        };
       case 'text-block':
         return {
           textContent: { spans: [{ text: 'Write your longer text content here. This block is perfect for paragraphs, detailed explanations, and extended writing.' }] }
@@ -515,6 +528,96 @@ export default function BlockEditor({
           );
         };
         (blockProps as typeof blockProps & { renderNestedBlock: typeof renderNestedBlock }).renderNestedBlock = renderNestedBlock;
+        break;
+      case 'collapsible-list-array':
+        BlockComponent = CollapsibleListArrayBlock;
+        // Add nested block handlers for collapsible list array
+        if (isNested && parentBlockId) {
+          // For nested collapsible array blocks, create specialized handlers
+          const nestedHandlers: Partial<NestedBlockHandlers> = {};
+          nestedHandlers.onAddNestedBlock = handleAddNestedBlock;
+          nestedHandlers.onUpdateNestedBlock = handleUpdateNestedBlock;
+          nestedHandlers.onDeleteNestedBlock = handleDeleteNestedBlock;
+          nestedHandlers.onReorderNestedBlocks = handleReorderNestedBlocks;
+          Object.assign(blockProps, nestedHandlers);
+        } else {
+          // For top-level collapsible array blocks, use the regular handlers
+          const topLevelHandlers: Partial<NestedBlockHandlers> = {
+            onAddNestedBlock: handleAddNestedBlock,
+            onUpdateNestedBlock: handleUpdateNestedBlock,
+            onDeleteNestedBlock: handleDeleteNestedBlock,
+            onReorderNestedBlocks: handleReorderNestedBlocks
+          };
+          Object.assign(blockProps, topLevelHandlers);
+        }
+        const renderNestedBlockArray = (nestedBlock: ContentBlock, _nestedIndex: number, moveProps?: {
+          onMoveUp: () => void;
+          onMoveDown: () => void;
+          canMoveUp: boolean;
+          canMoveDown: boolean;
+        }): React.JSX.Element | null => {
+          
+          // We need to render the block component directly since renderBlock returns JSX
+          let NestedBlockComponent;
+          switch (nestedBlock.type) {
+            case 'header':
+              NestedBlockComponent = HeaderBlock;
+              break;
+            case 'text':
+              NestedBlockComponent = TextBlock;
+              break;
+            case 'list':
+              NestedBlockComponent = ListBlock;
+              break;
+            case 'divider':
+              NestedBlockComponent = DividerBlock;
+              break;
+            case 'collapsible-list':
+              NestedBlockComponent = CollapsibleListBlock;
+              break;
+            case 'collapsible-list-array':
+              NestedBlockComponent = CollapsibleListArrayBlock;
+              break;
+            case 'text-block':
+              NestedBlockComponent = TextBlockContent;
+              break;
+            case 'markdown':
+              NestedBlockComponent = MarkdownBlock;
+              break;
+            default:
+              return null;
+          }
+          
+          const baseProps = {
+            block: nestedBlock,
+            onUpdate: handleUpdateNestedBlock,
+            onDelete: () => handleDeleteNestedBlock(nestedBlock.id),
+            onDragStart: () => handleDragStart(nestedBlock.id),
+            onDragEnd: handleDragEnd,
+            isDragging: draggedBlockId === nestedBlock.id,
+            onMoveUp: moveProps?.onMoveUp,
+            onMoveDown: moveProps?.onMoveDown,
+            canMoveUp: moveProps?.canMoveUp,
+            canMoveDown: moveProps?.canMoveDown
+          };
+          
+          // Add additional props for collapsible blocks
+          if (nestedBlock.type === 'collapsible-list' || nestedBlock.type === 'collapsible-list-array') {
+            const collapsibleProps = baseProps as typeof baseProps & NestedBlockHandlers;
+            collapsibleProps.onAddNestedBlock = handleAddNestedBlock;
+            collapsibleProps.onUpdateNestedBlock = handleUpdateNestedBlock;
+            collapsibleProps.onDeleteNestedBlock = handleDeleteNestedBlock;
+            collapsibleProps.onReorderNestedBlocks = handleReorderNestedBlocks;
+            collapsibleProps.renderNestedBlock = (deepNestedBlock: ContentBlock, deepNestedIndex: number) => renderBlock(deepNestedBlock, deepNestedIndex, true, nestedBlock.id) || <div />;
+          }
+          
+          return (
+            <div key={nestedBlock.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/50 rounded-lg -mx-2 px-2">
+              <NestedBlockComponent {...baseProps} />
+            </div>
+          );
+        };
+        (blockProps as typeof blockProps & { renderNestedBlock: typeof renderNestedBlockArray }).renderNestedBlock = renderNestedBlockArray;
         break;
       case 'text-block':
         BlockComponent = TextBlockContent;
