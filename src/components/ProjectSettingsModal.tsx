@@ -3,6 +3,19 @@
 import { useState, useEffect } from 'react';
 import { ProjectSettings } from '@/lib/types';
 
+const STATUS_COLORS = [
+  '#3B82F6', // Blue
+  '#EF4444', // Red
+  '#10B981', // Green
+  '#F59E0B', // Yellow
+  '#8B5CF6', // Purple
+  '#EC4899', // Pink
+  '#6B7280', // Gray
+  '#14B8A6', // Teal
+  '#F97316', // Orange
+  '#84CC16', // Lime
+];
+
 interface ProjectSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -17,6 +30,7 @@ export default function ProjectSettingsModal({
   onUpdateSettings 
 }: ProjectSettingsModalProps) {
   const [statusTypes, setStatusTypes] = useState<string[]>([]);
+  const [statusColors, setStatusColors] = useState<{ [status: string]: string }>({});
   const [commentatorTypes, setCommentatorTypes] = useState<string[]>([]);
   const [newStatusType, setNewStatusType] = useState('');
   const [newCommentatorType, setNewCommentatorType] = useState('');
@@ -24,6 +38,7 @@ export default function ProjectSettingsModal({
   useEffect(() => {
     if (settings) {
       setStatusTypes([...settings.statusTypes]);
+      setStatusColors({ ...settings.statusColors });
       setCommentatorTypes([...settings.commentatorTypes]);
     }
   }, [settings]);
@@ -33,6 +48,7 @@ export default function ProjectSettingsModal({
       onUpdateSettings({
         ...settings,
         statusTypes,
+        statusColors,
         commentatorTypes
       });
     }
@@ -41,6 +57,7 @@ export default function ProjectSettingsModal({
   const handleClose = () => {
     if (settings) {
       setStatusTypes([...settings.statusTypes]);
+      setStatusColors({ ...settings.statusColors });
       setCommentatorTypes([...settings.commentatorTypes]);
     }
     setNewStatusType('');
@@ -50,13 +67,25 @@ export default function ProjectSettingsModal({
 
   const addStatusType = () => {
     if (newStatusType.trim() && !statusTypes.includes(newStatusType.trim())) {
-      setStatusTypes([...statusTypes, newStatusType.trim()]);
+      const newStatus = newStatusType.trim();
+      setStatusTypes([...statusTypes, newStatus]);
+      // Set default color for new status
+      setStatusColors({ ...statusColors, [newStatus]: '#3B82F6' });
       setNewStatusType('');
     }
   };
 
   const removeStatusType = (index: number) => {
+    const statusToRemove = statusTypes[index];
     setStatusTypes(statusTypes.filter((_, i) => i !== index));
+    // Remove color mapping for removed status
+    const newColors = { ...statusColors };
+    delete newColors[statusToRemove];
+    setStatusColors(newColors);
+  };
+
+  const updateStatusColor = (status: string, color: string) => {
+    setStatusColors({ ...statusColors, [status]: color });
   };
 
   const addCommentatorType = () => {
@@ -113,16 +142,39 @@ export default function ProjectSettingsModal({
               
               <div className="space-y-3">
                 {statusTypes.map((status, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
-                    <span className="text-slate-800 dark:text-white">{status}</span>
-                    <button
-                      onClick={() => removeStatusType(index)}
-                      className="text-red-500 hover:text-red-700 transition-colors"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
+                  <div key={index} className="p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-2">
+                        <div 
+                          className="w-4 h-4 rounded-full" 
+                          style={{ backgroundColor: statusColors[status] || '#3B82F6' }}
+                        />
+                        <span className="text-slate-800 dark:text-white font-medium">{status}</span>
+                      </div>
+                      <button
+                        onClick={() => removeStatusType(index)}
+                        className="text-red-500 hover:text-red-700 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {STATUS_COLORS.map((color) => (
+                        <button
+                          key={color}
+                          onClick={() => updateStatusColor(status, color)}
+                          className={`w-6 h-6 rounded-full transition-all ${
+                            statusColors[status] === color 
+                              ? 'ring-2 ring-slate-400 ring-offset-2 ring-offset-slate-50 dark:ring-offset-slate-700 scale-110' 
+                              : 'hover:scale-105'
+                          }`}
+                          style={{ backgroundColor: color }}
+                          title={`Set ${status} color`}
+                        />
+                      ))}
+                    </div>
                   </div>
                 ))}
                 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { ContentBlock } from '@/lib/types';
+import { ContentBlock, ProjectSettings } from '@/lib/types';
 
 interface BlockSettingsMenuProps {
   block: ContentBlock;
@@ -13,6 +13,7 @@ interface BlockSettingsMenuProps {
   canMoveUp?: boolean;
   canMoveDown?: boolean;
   onAddOverlayComment?: () => void;
+  projectSettings?: ProjectSettings | null;
 }
 
 const BLOCK_COLORS = [
@@ -27,10 +28,11 @@ const BLOCK_COLORS = [
   { name: 'Pink', value: 'pink', bg: 'bg-pink-50', border: 'border-pink-200' },
 ];
 
-export default function BlockSettingsMenu({ block, onDelete, onUpdate, onClose, onMoveUp, onMoveDown, canMoveUp, canMoveDown, onAddOverlayComment }: BlockSettingsMenuProps) {
+export default function BlockSettingsMenu({ block, onDelete, onUpdate, onClose, onMoveUp, onMoveDown, canMoveUp, canMoveDown, onAddOverlayComment, projectSettings }: BlockSettingsMenuProps) {
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showHeightInput, setShowHeightInput] = useState(false);
+  const [showStatusPicker, setShowStatusPicker] = useState(false);
   const [heightValue, setHeightValue] = useState(block.content.fixedHeight?.toString() || '');
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -85,6 +87,16 @@ export default function BlockSettingsMenu({ block, onDelete, onUpdate, onClose, 
     onClose();
   };
 
+  const handleStatusChange = (status: string) => {
+    const updatedBlock = {
+      ...block,
+      status: status
+    };
+    onUpdate(updatedBlock);
+    setShowStatusPicker(false);
+    onClose();
+  };
+
   const handleDelete = () => {
     setShowDeleteConfirmation(true);
   };
@@ -115,6 +127,37 @@ export default function BlockSettingsMenu({ block, onDelete, onUpdate, onClose, 
   };
 
   const isTextOrTextBlock = block.type === 'text' || block.type === 'text-block';
+  const statusTypes = projectSettings?.statusTypes || ['Projekt', 'Sofort', 'Beobachten', 'To-Do', 'Ministerium Überwachung'];
+  const currentStatus = block.status || '';
+
+  const getStatusColor = (status: string) => {
+    // Use custom color from settings if available
+    const customColor = projectSettings?.statusColors?.[status];
+    if (customColor) {
+      return customColor;
+    }
+    
+    // Fallback to hardcoded colors for legacy support
+    switch (status.toLowerCase()) {
+      case 'to-do':
+        return '#6B7280';
+      case 'sofort':
+        return '#EF4444';
+      case 'projekt':
+        return '#3B82F6';
+      case 'ministerium überwachung':
+        return '#8B5CF6';
+      // Legacy support
+      case 'todo':
+        return '#6B7280';
+      case 'in progress':
+        return '#F59E0B';
+      case 'done':
+        return '#10B981';
+      default:
+        return '#3B82F6';
+    }
+  };
 
   return (
     <div
@@ -165,6 +208,62 @@ export default function BlockSettingsMenu({ block, onDelete, onUpdate, onClose, 
 
       {/* Divider */}
       {(onMoveUp || onMoveDown) && <div className="border-t border-slate-200 dark:border-slate-600 my-1"></div>}
+
+      {/* Status option */}
+      <button
+        onClick={() => setShowStatusPicker(!showStatusPicker)}
+        className="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center space-x-2 text-slate-700 dark:text-slate-300"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>Set Status</span>
+        {currentStatus && (
+          <span 
+            className="ml-auto px-2 py-1 rounded-full text-xs font-medium text-white"
+            style={{ backgroundColor: getStatusColor(currentStatus) }}
+          >
+            {currentStatus}
+          </span>
+        )}
+        <svg className={`w-4 h-4 ml-auto transition-transform ${showStatusPicker ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+
+      {/* Status picker */}
+      {showStatusPicker && (
+        <div className="px-3 pb-2">
+          <div className="mt-2 space-y-1">
+            <button
+              onClick={() => handleStatusChange('')}
+              className={`w-full text-left px-2 py-1 text-sm rounded transition-colors ${
+                currentStatus === '' ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+              }`}
+            >
+              No Status
+            </button>
+            {statusTypes.map((status) => (
+              <button
+                key={status}
+                onClick={() => handleStatusChange(status)}
+                className={`w-full text-left px-2 py-1 text-sm rounded transition-colors flex items-center space-x-2 ${
+                  currentStatus === status ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+                }`}
+              >
+                <span 
+                  className="w-2 h-2 rounded-full"
+                  style={{ backgroundColor: getStatusColor(status) }}
+                ></span>
+                <span>{status}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Divider */}
+      <div className="border-t border-slate-200 dark:border-slate-600 my-1"></div>
 
       {/* Delete option */}
       <button

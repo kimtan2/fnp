@@ -8,6 +8,7 @@ import ProjectHeader from '@/components/ProjectHeader';
 import ComposableCard from '@/components/ComposableCard';
 import AddComposableModal from '@/components/AddComposableModal';
 import ProjectSettingsModal from '@/components/ProjectSettingsModal';
+import StatusFilterModal from '@/components/StatusFilterModal';
 import HistoryPage from '@/components/HistoryPage';
 
 export default function ProjectPage() {
@@ -20,6 +21,7 @@ export default function ProjectPage() {
   const [settings, setSettings] = useState<ProjectSettings | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isStatusFilterModalOpen, setIsStatusFilterModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -110,6 +112,7 @@ export default function ProjectPage() {
         project={project}
         onSettingsClick={() => setIsSettingsModalOpen(true)}
         onHistoryClick={() => setIsHistoryModalOpen(true)}
+        onStatusFilterClick={() => setIsStatusFilterModalOpen(true)}
         onBack={() => router.push('/')}
       />
       
@@ -160,6 +163,13 @@ export default function ProjectPage() {
         onClose={() => setIsSettingsModalOpen(false)}
         settings={settings}
         onUpdateSettings={handleUpdateSettings}
+      />
+
+      <StatusFilterModal
+        isOpen={isStatusFilterModalOpen}
+        onClose={() => setIsStatusFilterModalOpen(false)}
+        projectId={projectId}
+        settings={settings}
       />
 
       <HistoryPage

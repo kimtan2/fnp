@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ContentBlock, HeaderSize, RichText } from '@/lib/types';
+import { ContentBlock, HeaderSize, RichText, ProjectSettings } from '@/lib/types';
 import BasicTextInput from '@/components/BasicTextInput';
 import BlockSettingsMenu from '@/components/BlockSettingsMenu';
 import OverlayCommentModal from '@/components/OverlayCommentModal';
@@ -19,6 +19,7 @@ interface HeaderBlockProps {
   onMoveDown?: () => void;
   canMoveUp?: boolean;
   canMoveDown?: boolean;
+  projectSettings?: ProjectSettings | null;
 }
 
 export default function HeaderBlock({
@@ -31,11 +32,41 @@ export default function HeaderBlock({
   onMoveUp,
   onMoveDown,
   canMoveUp,
-  canMoveDown
+  canMoveDown,
+  projectSettings
 }: HeaderBlockProps) {
   const [showSizeMenu, setShowSizeMenu] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const overlayComment = useOverlayComment(block, onUpdate);
+
+  const getStatusColor = (status: string) => {
+    // Use custom color from settings if available
+    const customColor = projectSettings?.statusColors?.[status];
+    if (customColor) {
+      return customColor;
+    }
+    
+    // Fallback to hardcoded colors for legacy support
+    switch (status.toLowerCase()) {
+      case 'to-do':
+        return '#6B7280';
+      case 'sofort':
+        return '#EF4444';
+      case 'projekt':
+        return '#3B82F6';
+      case 'ministerium überwachung':
+        return '#8B5CF6';
+      // Legacy support
+      case 'todo':
+        return '#6B7280';
+      case 'in progress':
+        return '#F59E0B';
+      case 'done':
+        return '#10B981';
+      default:
+        return '#3B82F6';
+    }
+  };
 
   const headerSize = block.content.headerSize || 'h1';
   const headerText = block.content.headerText || { spans: [] };
@@ -95,6 +126,18 @@ export default function HeaderBlock({
         position="-right-24"
       />
 
+      {/* Status display (always visible) */}
+      {block.status && (
+        <div className="absolute -right-32 top-0">
+          <div 
+            className="px-2 py-1 rounded-full text-xs font-medium text-white"
+            style={{ backgroundColor: getStatusColor(block.status) }}
+          >
+            {block.status}
+          </div>
+        </div>
+      )}
+
       <div className="flex-1 relative">
         {/* Header size selector */}
         <div className="absolute -right-20 top-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center space-x-1">
@@ -147,6 +190,7 @@ export default function HeaderBlock({
                 canMoveUp={canMoveUp}
                 canMoveDown={canMoveDown}
                 onAddOverlayComment={overlayComment.handleAddOverlayComment}
+                projectSettings={projectSettings}
               />
             )}
           </div>

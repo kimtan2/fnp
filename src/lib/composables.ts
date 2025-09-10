@@ -13,6 +13,7 @@ export interface ProjectSettings {
   id: string;
   projectId: string;
   statusTypes: string[];
+  statusColors: { [status: string]: string };
   commentatorTypes: string[];
   createdAt: Date;
   updatedAt: Date;
@@ -135,7 +136,13 @@ class ComposableDB {
           const defaultSettings: ProjectSettings = {
             id: crypto.randomUUID(),
             projectId,
-            statusTypes: ['Todo', 'In Progress', 'Done'],
+            statusTypes: ['Projekt', 'Sofort', 'Beobachten', 'To-Do', 'Ministerium Überwachung'],
+            statusColors: {
+              'Projekt': '#3B82F6',
+              'Sofort': '#EF4444', 
+              'To-Do': '#6B7280',
+              'Ministerium Überwachung': '#8B5CF6'
+            },
             commentatorTypes: ['Developer', 'Designer', 'Product Manager', 'QA'],
             createdAt: new Date(),
             updatedAt: new Date()

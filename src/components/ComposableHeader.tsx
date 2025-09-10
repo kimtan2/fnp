@@ -81,11 +81,13 @@ export default function ComposableHeader({ project, composable, onBack }: Compos
           </div>
           
           <div className="flex items-center space-x-4">
-            <span 
-              className={`inline-block px-3 py-1 rounded-full text-xs font-medium text-white ${getStatusColor(composable.status)}`}
-            >
-              {composable.status}
-            </span>
+            {composable.status && composable.status !== 'No Status' && (
+              <span 
+                className={`inline-block px-3 py-1 rounded-full text-xs font-medium text-white ${getStatusColor(composable.status)}`}
+              >
+                {composable.status}
+              </span>
+            )}
             
            
           </div>

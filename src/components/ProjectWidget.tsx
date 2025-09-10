@@ -30,6 +30,12 @@ export default function ProjectWidget({ project, onUpdate, onDelete }: ProjectWi
   const handleMouseDown = (e: React.MouseEvent) => {
     if (isEditing || showMenu) return;
     
+    // Check if the click is on the three dots button
+    const target = e.target as HTMLElement;
+    if (target.closest('button')) {
+      return; // Don't start dragging if clicking on a button
+    }
+    
     const rect = widgetRef.current?.getBoundingClientRect();
     if (rect) {
       setDragOffset({

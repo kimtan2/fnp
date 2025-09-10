@@ -35,18 +35,34 @@ export default function ComposableCard({
   const [dragStartTime, setDragStartTime] = useState<number>(0);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  const statusOptions = settings?.statusTypes || ['Todo', 'In Progress', 'Done'];
+  const statusOptions = settings?.statusTypes || ['Projekt', 'Sofort', 'Beobachten', 'To-Do', 'Ministerium Überwachung'];
 
   const getStatusColor = (status: string) => {
+    // Use custom color from settings if available
+    const customColor = settings?.statusColors?.[status];
+    if (customColor) {
+      return customColor;
+    }
+    
+    // Fallback to hardcoded colors for legacy support
     switch (status.toLowerCase()) {
+      case 'to-do':
+        return '#6B7280';
+      case 'sofort':
+        return '#EF4444';
+      case 'projekt':
+        return '#3B82F6';
+      case 'ministerium überwachung':
+        return '#8B5CF6';
+      // Legacy support
       case 'todo':
-        return 'bg-slate-500';
+        return '#6B7280';
       case 'in progress':
-        return 'bg-yellow-500';
+        return '#F59E0B';
       case 'done':
-        return 'bg-green-500';
+        return '#10B981';
       default:
-        return 'bg-blue-500';
+        return '#3B82F6';
     }
   };
 
@@ -154,19 +170,25 @@ export default function ComposableCard({
               <h3 className="font-semibold text-slate-800 dark:text-white text-lg leading-tight">
                 {composable.title}
               </h3>
-              <div className="flex items-center space-x-2 mt-1">
-                <span 
-                  className={`inline-block px-2 py-1 rounded-full text-xs font-medium text-white ${getStatusColor(composable.status)}`}
-                >
-                  {composable.status}
-                </span>
-              </div>
+              {composable.status && composable.status !== 'No Status' && (
+                <div className="flex items-center space-x-2 mt-1">
+                  <span 
+                    className="inline-block px-2 py-1 rounded-full text-xs font-medium text-white"
+                    style={{ backgroundColor: getStatusColor(composable.status) }}
+                  >
+                    {composable.status}
+                  </span>
+                </div>
+              )}
             </div>
             
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 setShowMenu(!showMenu);
+              }}
+              onMouseDown={(e) => {
+                e.stopPropagation();
               }}
               className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded transition-colors"
             >

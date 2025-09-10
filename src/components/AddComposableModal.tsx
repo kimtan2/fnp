@@ -27,7 +27,7 @@ export default function AddComposableModal({
   const [status, setStatus] = useState('No Status');
   const [selectedColor, setSelectedColor] = useState(colors[0]);
 
-  const statusOptions = settings?.statusTypes || ['No Status', 'Todo', 'In Progress', 'Done'];
+  const statusOptions = settings?.statusTypes || ['No Status', 'Projekt', 'Sofort', 'Beobachten', 'To-Do', 'Ministerium Überwachung'];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

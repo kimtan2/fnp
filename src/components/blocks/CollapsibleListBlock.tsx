@@ -58,6 +58,35 @@ export default function CollapsibleListBlock({
   const [showSettings, setShowSettings] = useState(false);
   const overlayComment = useOverlayComment(block, onUpdate);
 
+  const getStatusColor = (status: string) => {
+    // Use custom color from settings if available
+    const customColor = projectSettings?.statusColors?.[status];
+    if (customColor) {
+      return customColor;
+    }
+    
+    // Fallback to hardcoded colors for legacy support
+    switch (status.toLowerCase()) {
+      case 'to-do':
+        return '#6B7280';
+      case 'sofort':
+        return '#EF4444';
+      case 'projekt':
+        return '#3B82F6';
+      case 'ministerium überwachung':
+        return '#8B5CF6';
+      // Legacy support
+      case 'todo':
+        return '#6B7280';
+      case 'in progress':
+        return '#F59E0B';
+      case 'done':
+        return '#10B981';
+      default:
+        return '#3B82F6';
+    }
+  };
+
   const handleTitleChange = (newTitle: RichText) => {
     onUpdate({
       ...block,
@@ -151,6 +180,18 @@ export default function CollapsibleListBlock({
         onClick={() => overlayComment.setShowOverlayComment(true)}
       />
 
+      {/* Status display (always visible) */}
+      {block.status && (
+        <div className="absolute -right-20 top-2">
+          <div 
+            className="px-2 py-1 rounded-full text-xs font-medium text-white"
+            style={{ backgroundColor: getStatusColor(block.status) }}
+          >
+            {block.status}
+          </div>
+        </div>
+      )}
+
       {/* Settings button */}
       <div className="absolute -right-8 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
         <button
@@ -175,6 +216,7 @@ export default function CollapsibleListBlock({
             canMoveUp={canMoveUp}
             canMoveDown={canMoveDown}
             onAddOverlayComment={overlayComment.handleAddOverlayComment}
+            projectSettings={projectSettings}
           />
         )}
       </div>

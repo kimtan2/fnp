@@ -23,6 +23,7 @@ export interface ProjectSettings {
   id: string;
   projectId: string;
   statusTypes: string[];
+  statusColors: { [status: string]: string };
   commentatorTypes: string[];
   createdAt: Date;
   updatedAt: Date;
@@ -79,6 +80,7 @@ export interface ContentBlock {
   overlayComment?: string; // For overlay comments
   hasRückseite?: boolean; // For card flip functionality
   isFlipped?: boolean; // Current flip state
+  status?: string; // Status for the block item
   content: {
     // Header block
     headerSize?: HeaderSize;

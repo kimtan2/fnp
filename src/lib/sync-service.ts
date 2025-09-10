@@ -191,6 +191,7 @@ class SyncService {
         try {
           await unifiedDB.updateProjectSettings(newProjectId, {
             statusTypes: settings.statusTypes,
+            statusColors: settings.statusColors || {},
             commentatorTypes: settings.commentatorTypes
           });
           imported++;
