@@ -581,7 +581,7 @@ export default function CollapsibleListArrayBlock({
                       onChange={(e) => setEditingTabTitle(e.target.value)}
                       onBlur={(e) => {
                         // Don't save if user is clicking on the color picker
-                        if (e.relatedTarget && e.relatedTarget.type === 'color') {
+                        if (e.relatedTarget && (e.relatedTarget as HTMLInputElement).type === 'color') {
                           return;
                         }
                         saveTabChanges();
