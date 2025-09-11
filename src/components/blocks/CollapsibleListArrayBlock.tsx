@@ -26,6 +26,17 @@ interface NestedBlockRendererProps {
   canMoveUp: boolean;
   canMoveDown: boolean;
   projectSettings?: ProjectSettings | null;
+  // Add these new props for nested block handling
+  onAddNestedBlock?: (parentBlockId: string, type: BlockType, position?: number) => void;
+  onUpdateNestedBlock?: (nestedBlock: ContentBlock) => void;
+  onDeleteNestedBlock?: (nestedBlockId: string) => void;
+  onReorderNestedBlocks?: (parentBlockId: string, newOrder: string[]) => void;
+  renderNestedBlock?: (block: ContentBlock, index: number, moveProps?: {
+    onMoveUp: () => void;
+    onMoveDown: () => void;
+    canMoveUp: boolean;
+    canMoveDown: boolean;
+  }) => React.ReactNode;
 }
 
 function NestedBlockRenderer({
@@ -36,7 +47,13 @@ function NestedBlockRenderer({
   onMoveDown,
   canMoveUp,
   canMoveDown,
-  projectSettings
+  projectSettings,
+  // Add these new props for nested block handling
+  onAddNestedBlock,
+  onUpdateNestedBlock,
+  onDeleteNestedBlock,
+  onReorderNestedBlocks,
+  renderNestedBlock
 }: NestedBlockRendererProps) {
   if (!block || !block.type) {
     return <div className="text-slate-400 text-sm">Invalid block</div>;
@@ -89,10 +106,199 @@ function NestedBlockRenderer({
     canMoveDown
   } : {};
 
+  // Helper function to get default content for new blocks
+  const getDefaultContentForNested = (type: BlockType) => {
+    switch (type) {
+      case 'header':
+        return {
+          headerSize: 'h1' as const,
+          headerText: { spans: [{ text: 'New Header' }] }
+        };
+      case 'text':
+        return {
+          text: { spans: [] }
+        };
+      case 'list':
+        return {
+          listType: 'bullet' as const,
+          listItems: [
+            { id: crypto.randomUUID(), content: { spans: [{ text: 'First item' }] } }
+          ]
+        };
+      case 'divider':
+        return {
+          dividerStyle: 'solid' as const
+        };
+      case 'collapsible-list':
+        return {
+          title: { spans: [{ text: 'Toggle section' }] },
+          isExpanded: false,
+          nestedBlocks: []
+        };
+      case 'text-block':
+        return {
+          textContent: { spans: [{ text: 'Write your content here...' }] }
+        };
+      case 'markdown':
+        return {
+          markdownContent: '# New Markdown Block\n\nDouble-click to edit...'
+        };
+      default:
+        return {};
+    }
+  };
+
+  // Add nested block handlers specifically for collapsible-list blocks
+  const nestedBlockProps = (block.type === 'collapsible-list') ? {
+    onAddNestedBlock: (_parentBlockId: string, type: BlockType, position?: number) => {
+      // Handle adding nested blocks within this specific collapsible list
+      const currentNestedBlocks = block.content?.nestedBlocks || [];
+      const newPosition = position !== undefined ? position : currentNestedBlocks.length;
+
+      const newNestedBlock: ContentBlock = {
+        id: crypto.randomUUID(),
+        composableId: block.composableId,
+        type,
+        position: newPosition,
+        parentBlockId: block.id,
+        content: getDefaultContentForNested(type),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      // Update the nested blocks for this specific collapsible list
+      const updatedNestedBlocks = [...currentNestedBlocks];
+      // Shift existing blocks if inserting in middle
+      if (position !== undefined && position < currentNestedBlocks.length) {
+        updatedNestedBlocks.forEach((nestedBlock, index) => {
+          if (index >= position) {
+            nestedBlock.position = nestedBlock.position + 1;
+          }
+        });
+      }
+      updatedNestedBlocks.splice(newPosition, 0, newNestedBlock);
+
+      // Update this collapsible list block
+      const updatedBlock = {
+        ...block,
+        content: {
+          ...block.content,
+          nestedBlocks: updatedNestedBlocks
+        }
+      };
+
+      onUpdate(updatedBlock);
+    },
+    onUpdateNestedBlock: (nestedBlock: ContentBlock) => {
+      // Handle updating nested blocks within this specific collapsible list
+      const currentNestedBlocks = block.content?.nestedBlocks || [];
+      const updatedNestedBlocks = currentNestedBlocks.map(nb =>
+        nb.id === nestedBlock.id ? nestedBlock : nb
+      );
+
+      const updatedBlock = {
+        ...block,
+        content: {
+          ...block.content,
+          nestedBlocks: updatedNestedBlocks
+        }
+      };
+
+      onUpdate(updatedBlock);
+    },
+    onDeleteNestedBlock: (nestedBlockId: string) => {
+      // Handle deleting nested blocks within this specific collapsible list
+      const currentNestedBlocks = block.content?.nestedBlocks || [];
+      const updatedNestedBlocks = currentNestedBlocks
+        .filter(nb => nb.id !== nestedBlockId)
+        .map((nb, index) => ({ ...nb, position: index }));
+
+      const updatedBlock = {
+        ...block,
+        content: {
+          ...block.content,
+          nestedBlocks: updatedNestedBlocks
+        }
+      };
+
+      onUpdate(updatedBlock);
+    },
+    onReorderNestedBlocks,
+    renderNestedBlock: (nestedBlock: ContentBlock, index: number, moveProps?: {
+      onMoveUp: () => void;
+      onMoveDown: () => void;
+      canMoveUp: boolean;
+      canMoveDown: boolean;
+    }) => {
+      // Custom renderer for nested blocks within collapsible lists
+      // This ensures nested blocks have proper update handlers to persist changes
+      const handleNestedBlockUpdate = (updatedBlock: ContentBlock) => {
+        // Update the collapsible list's nested blocks
+        const currentNestedBlocks = block.content?.nestedBlocks || [];
+        const updatedNestedBlocks = currentNestedBlocks.map(nb =>
+          nb.id === updatedBlock.id ? updatedBlock : nb
+        );
+
+        // Update the collapsible list block itself
+        const updatedCollapsibleListBlock = {
+          ...block,
+          content: {
+            ...block.content,
+            nestedBlocks: updatedNestedBlocks
+          }
+        };
+
+        // Call the collapsible list's update handler to propagate changes upward
+        onUpdate(updatedCollapsibleListBlock);
+      };
+
+      const handleNestedBlockDelete = (blockId: string) => {
+        // Remove the block from collapsible list's nested blocks
+        const currentNestedBlocks = block.content?.nestedBlocks || [];
+        const updatedNestedBlocks = currentNestedBlocks
+          .filter(nb => nb.id !== blockId)
+          .map((nb, idx) => ({ ...nb, position: idx }));
+
+        // Update the collapsible list block itself
+        const updatedCollapsibleListBlock = {
+          ...block,
+          content: {
+            ...block.content,
+            nestedBlocks: updatedNestedBlocks
+          }
+        };
+
+        // Call the collapsible list's update handler to propagate changes upward
+        onUpdate(updatedCollapsibleListBlock);
+      };
+
+      return (
+        <NestedBlockRenderer
+          block={nestedBlock}
+          index={index}
+          onUpdate={handleNestedBlockUpdate}
+          onDelete={() => handleNestedBlockDelete(nestedBlock.id)}
+          onMoveUp={moveProps?.onMoveUp || (() => {})}
+          onMoveDown={moveProps?.onMoveDown || (() => {})}
+          canMoveUp={moveProps?.canMoveUp || false}
+          canMoveDown={moveProps?.canMoveDown || false}
+          projectSettings={projectSettings}
+          onAddNestedBlock={onAddNestedBlock}
+          onUpdateNestedBlock={onUpdateNestedBlock}
+          onDeleteNestedBlock={onDeleteNestedBlock}
+          onReorderNestedBlocks={onReorderNestedBlocks}
+          renderNestedBlock={renderNestedBlock}
+        />
+      );
+    }
+  } : {};
+
+
   return (
     <BlockComponent
       {...baseProps}
       {...moveProps}
+      {...nestedBlockProps}
     />
   );
 }
@@ -116,6 +322,12 @@ interface CollapsibleListArrayBlockProps {
   onUpdateNestedBlock?: (nestedBlock: ContentBlock) => void;
   onDeleteNestedBlock?: (nestedBlockId: string) => void;
   onReorderNestedBlocks?: (parentBlockId: string, newOrder: string[]) => void;
+  renderNestedBlock?: (block: ContentBlock, index: number, moveProps?: {
+    onMoveUp: () => void;
+    onMoveDown: () => void;
+    canMoveUp: boolean;
+    canMoveDown: boolean;
+  }) => React.ReactNode;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
   canMoveUp?: boolean;
@@ -128,8 +340,11 @@ export default function CollapsibleListArrayBlock({
   onUpdate,
   onDelete,
   isDragging,
+  onAddNestedBlock,
   onUpdateNestedBlock,
   onDeleteNestedBlock,
+  onReorderNestedBlocks,
+  renderNestedBlock,
   onMoveUp,
   onMoveDown,
   canMoveUp,
@@ -195,33 +410,32 @@ export default function CollapsibleListArrayBlock({
     }
   };
 
-  const updateTabs = (updatedTabs: CollapsibleListArrayTab[]) => {
+  // Helper function to update tabs and persist changes
+  const updateTabs = useCallback((newTabs: CollapsibleListArrayTab[]) => {
     onUpdate({
       ...block,
       content: {
         ...block.content,
-        tabs: updatedTabs
+        tabs: newTabs
       }
     });
-  };
+  }, [block, onUpdate]);
 
-  const handleAddTab = () => {
+  const addTab = () => {
     const newTab: CollapsibleListArrayTab = {
       id: crypto.randomUUID(),
       title: { spans: [{ text: `Tab ${tabs.length + 1}` }] },
-      isExpanded: true,
+      isExpanded: false,
       nestedBlocks: [],
       color: '#3B82F6'
     };
     
-    // Auto-expand new tab and collapse others
-    const newTabs = [...tabs.map(tab => ({ ...tab, isExpanded: false })), newTab];
+    const newTabs = [...tabs, newTab];
     updateTabs(newTabs);
     setActiveTabId(newTab.id);
   };
 
-  const handleDeleteTab = (tabId: string) => {
-    if (tabs.length <= 1) return; // Don't delete the last tab
+  const deleteTab = (tabId: string) => {
     setShowDeleteConfirm(tabId);
   };
 
@@ -229,13 +443,13 @@ export default function CollapsibleListArrayBlock({
     if (!showDeleteConfirm) return;
     
     const newTabs = tabs.filter(tab => tab.id !== showDeleteConfirm);
-    updateTabs(newTabs);
     
-    // If we deleted the active tab, switch to the first remaining tab
-    if (activeTabId === showDeleteConfirm) {
-      setActiveTabId(newTabs[0]?.id || '');
+    // If we're deleting the active tab, switch to the first remaining tab
+    if (activeTabId === showDeleteConfirm && newTabs.length > 0) {
+      setActiveTabId(newTabs[0].id);
     }
     
+    updateTabs(newTabs);
     setShowDeleteConfirm(null);
   };
 
@@ -252,10 +466,10 @@ export default function CollapsibleListArrayBlock({
     }
   };
 
-  const saveTabChanges = useCallback(() => {
+  const saveTabEditing = useCallback(() => {
     if (!editingTabId) return;
     
-    const newTabs = tabs.map(tab =>
+    const newTabs = tabs.map(tab => 
       tab.id === editingTabId 
         ? { 
             ...tab, 
@@ -566,104 +780,104 @@ export default function CollapsibleListArrayBlock({
                 onDoubleClick={() => startEditingTab(tab.id)}
                 className={`relative px-3 py-1.5 text-sm font-medium rounded-t-lg transition-colors ${
                   activeTabId === tab.id
-                    ? 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white border-b-2'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800'
-                } ${draggedTabId === tab.id ? 'opacity-50' : ''}`}
-                style={{
-                  borderBottomColor: activeTabId === tab.id ? (tab.color || '#3B82F6') : 'transparent'
+                    ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-l border-r border-t border-slate-200 dark:border-slate-600'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+                style={{ 
+                  borderBottomColor: activeTabId === tab.id ? 'transparent' : undefined,
+                  backgroundColor: activeTabId === tab.id ? undefined : `${tab.color}20`
                 }}
               >
-                {editingTabId === tab.id ? (
-                  <div className="flex items-center space-x-2 min-w-20" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center space-x-2">
+                  <div 
+                    className="w-2 h-2 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: tab.color }}
+                  />
+                  <span className={`${draggedTabId === tab.id ? 'opacity-50' : ''}`}>
+                    {tab.title.spans[0]?.text || `Tab ${tabs.indexOf(tab) + 1}`}
+                  </span>
+                  {tabs.length > 1 && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteTab(tab.id);
+                      }}
+                      className="ml-1 text-slate-400 hover:text-red-500 transition-colors"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              </button>
+              
+              {/* Edit tab form */}
+              {editingTabId === tab.id && (
+                <div className="absolute top-full left-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg shadow-lg p-3 z-50 min-w-48">
+                  <div className="space-y-3">
                     <input
                       type="text"
                       value={editingTabTitle}
                       onChange={(e) => setEditingTabTitle(e.target.value)}
-                      onBlur={(e) => {
-                        // Don't save if user is clicking on the color picker
-                        if (e.relatedTarget && (e.relatedTarget as HTMLInputElement).type === 'color') {
-                          return;
-                        }
-                        saveTabChanges();
-                      }}
+                      className="w-full px-2 py-1 text-sm border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                      placeholder="Tab title"
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          saveTabChanges();
-                        } else if (e.key === 'Escape') {
-                          cancelTabEditing();
-                        }
+                        if (e.key === 'Enter') saveTabEditing();
+                        if (e.key === 'Escape') cancelTabEditing();
                       }}
-                      className="border-none bg-transparent text-sm p-0 m-0 outline-none min-w-0 flex-1"
                       autoFocus
                     />
-                    <input
-                      type="color"
-                      value={editingTabColor}
-                      onChange={(e) => {
-                        setEditingTabColor(e.target.value);
-                        // Save color change immediately since color picker behavior is different
-                        const newTabs = tabs.map(tab =>
-                          tab.id === editingTabId 
-                            ? { ...tab, color: e.target.value }
-                            : tab
-                        );
-                        updateTabs(newTabs);
-                      }}
-                      onClick={(e) => e.stopPropagation()}
-                      onFocus={(e) => e.stopPropagation()}
-                      className="w-4 h-4 border-none bg-transparent cursor-pointer"
-                      title="Change tab color"
-                    />
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="color"
+                        value={editingTabColor}
+                        onChange={(e) => setEditingTabColor(e.target.value)}
+                        className="w-8 h-8 rounded cursor-pointer"
+                      />
+                      <div className="flex space-x-1">
+                        <button
+                          onClick={saveTabEditing}
+                          className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={cancelTabEditing}
+                          className="px-2 py-1 text-xs bg-slate-300 dark:bg-slate-600 text-slate-700 dark:text-slate-300 rounded hover:bg-slate-400 dark:hover:bg-slate-500 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                ) : (
-                  <div className="flex items-center space-x-1">
-                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: tab.color || '#3B82F6' }}></div>
-                    <span>{tab.title.spans[0]?.text || 'Tab'}</span>
-                    {tabs.length > 1 && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteTab(tab.id);
-                        }}
-                        className="ml-1 text-slate-400 hover:text-red-500 transition-colors"
-                      >
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    )}
-                  </div>
-                )}
-              </button>
+                </div>
+              )}
             </div>
           ))}
           
           {/* Add tab button */}
           <button
-            onClick={handleAddTab}
-            className="flex-shrink-0 px-2 py-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-            title="Add tab"
+            onClick={addTab}
+            className="px-2 py-1.5 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 border border-dashed border-slate-300 dark:border-slate-600 rounded-t-lg transition-colors"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
+            + Add Tab
           </button>
         </div>
       </div>
 
-      {/* Tab content with fixed height and scroll */}
-      <div className="border border-slate-200 dark:border-slate-600 rounded-lg bg-slate-50/50 dark:bg-slate-800/50 overflow-hidden" style={{ height: '300px' }}>
-        {/* Scrollable content area */}
-        <div className="overflow-y-auto h-full p-3">
-          {activeTab && activeTab.isExpanded && (
-            <div>
-              {/* Empty state for nested blocks */}
+      {/* Tab content */}
+      <div className="tab-content">
+        {activeTab && (
+          <div className={`tab-panel ${activeTab.isExpanded ? 'expanded' : ''}`}>
+            <div className="pl-6 border-l-2 max-h-96  min-h-96 overflow-y-auto" style={{ borderColor: `${activeTab.color}40` }}>
+              {/* Empty state when no nested blocks */}
               {(!activeTab.nestedBlocks || activeTab.nestedBlocks.length === 0) && (
-                <div className="group/empty py-2">
-                  <div className="flex items-center">
+                <div className="py-4">
+                  <div className="group/empty flex items-center">
                     <div className="flex-shrink-0 w-6 flex justify-center">
                       <button
-                        className="w-4 h-4 opacity-60 hover:opacity-100 transition-opacity flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded shadow-sm relative z-10"
+                        className="w-4 h-4 opacity-60 hover:opacity-100 transition-opacity flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded shadow-sm"
                         onClick={() => setShowAddMenu({ tabId: activeTab.id, position: 0, show: !showAddMenu.show })}
                       >
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -730,6 +944,12 @@ export default function CollapsibleListArrayBlock({
                             canMoveUp={index > 0}
                             canMoveDown={index < (activeTab.nestedBlocks?.length || 0) - 1}
                             projectSettings={projectSettings}
+                            // Add these nested block handlers
+                            onAddNestedBlock={onAddNestedBlock}
+                            onUpdateNestedBlock={onUpdateNestedBlock}
+                            onDeleteNestedBlock={onDeleteNestedBlock}
+                            onReorderNestedBlocks={onReorderNestedBlocks}
+                            renderNestedBlock={renderNestedBlock}
                           />
                         </div>
                       ) : (
@@ -772,8 +992,8 @@ export default function CollapsibleListArrayBlock({
                 </div>
               )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Delete Confirmation Modal */}
